@@ -1,5 +1,5 @@
-from crane_fmu.crane import Crane
 from crane_fmu.boom import Boom
+from crane_fmu.crane import Crane
 
 
 class MobileCrane(Crane):
