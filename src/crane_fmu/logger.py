@@ -88,7 +88,9 @@ class MsgCounterHandler(logging.StreamHandler):
             ## TextIOWrapper.write() takes one argument hence self.levelColor[l] removed from the argument
             self._out.write(fullMsg)
 
-    def get_count(self, levels: tuple = ("WARNING", "ERROR"), pretty_print: bool = False):
+    def get_count(
+        self, levels: tuple = ("WARNING", "ERROR"), pretty_print: bool = False
+    ):
         if pretty_print:  # return a message string
             msg = "Logger counts"
             for i, level in enumerate(levels):

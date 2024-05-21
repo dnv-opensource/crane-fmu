@@ -30,7 +30,9 @@ class MobileCrane(Crane):
         boomLength1="50 m",
         **kwargs,
     ):
-        super().__init__(name=name, description=description, author=author, version=version, **kwargs)
+        super().__init__(
+            name=name, description=description, author=author, version=version, **kwargs
+        )
         pedestal = Boom(
             name="pedestal",
             description="The crane base, on one side fixed to the vessel and on the other side the first crane boom is fixed to it. The mass should include all additional items fixed to it, like the operator's cab",
@@ -81,9 +83,13 @@ def test_make_mobilecrane():
         ],
     )
     val = validate_fmu(asBuilt.name)
-    assert not len(val), f"Validation of the modelDescription of {asBuilt.name} was not successful. Errors: {val}"
+    assert not len(
+        val
+    ), f"Validation of the modelDescription of {asBuilt.name} was not successful. Errors: {val}"
     dump(asBuilt.name)
-    shutil.copy(asBuilt.name, "./OSP_model/")  # copy the created FMU also to the OSP_model folder
+    shutil.copy(
+        asBuilt.name, "./OSP_model/"
+    )  # copy the created FMU also to the OSP_model folder
 
 
 def test_run_mobilecrane():

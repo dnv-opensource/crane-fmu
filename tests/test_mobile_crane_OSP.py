@@ -25,7 +25,9 @@ def test_make_OSP_system_structure():
             "simpleTable": {"interpolate": True},
             "mobileCrane": {"pedestal.mass": 5000.0, "boom.boom[0]": 20.0},
         },
-        connections=(("simpleTable", "outputs[0]", "mobileCrane", "pedestal.angularVelocity"),),
+        connections=(
+            ("simpleTable", "outputs[0]", "mobileCrane", "pedestal.angularVelocity"),
+        ),
     )
 
 
@@ -93,7 +95,9 @@ def perform_test(what="crane-with-table"):
     what='table': stand-alone simulation of table
     what='crane-with-table': simulation of crane with input from table
     """
-    assert os.path.exists("./SimpleTable.fmu"), "SimpleTable.fmu not found in this folder. Should be copied beforehand."
+    assert os.path.exists(
+        "./SimpleTable.fmu"
+    ), "SimpleTable.fmu not found in this folder. Should be copied beforehand."
     assert os.path.exists(
         "./MobileCrane.fmu"
     ), "MobileCrane.fmu not found in this folder. Should be generated and copied (by ../test_mobile_crane_FMU.py)"
@@ -110,7 +114,9 @@ def perform_test(what="crane-with-table"):
         table = CosimLocalSlave(fmu_path="SimpleTable.fmu", instance_name="simpleTable")
         iTable = simulator.add_local_slave(table)
     if what == "crane-with-table":  # system simulation
-        sys_path = os.path.join(os.path.abspath(os.path.curdir), "OspSystemStructure.xml")
+        sys_path = os.path.join(
+            os.path.abspath(os.path.curdir), "OspSystemStructure.xml"
+        )
         assert os.path.exists(sys_path), "OspSystemStructure file not found"
         print("PATH", sys_path)
         simulator = CosimExecution.from_osp_config_file(sys_path)
@@ -124,14 +130,22 @@ def perform_test(what="crane-with-table"):
         assert len(infos) == 1, "# installed slaves"
         assert infos[0].name.decode() == "simpleTable"
         assert simulator.num_slaves() == 1, "# installed slaves"
-        assert simulator.slave_index_from_instance_name("simpleTable") == 0, "Slave index"
+        assert (
+            simulator.slave_index_from_instance_name("simpleTable") == 0
+        ), "Slave index"
         assert simulator.num_slave_variables(0) == 4, "# slave variables"
         assert simulator.real_time_simulation_enabled(), "real time enabled"  # why?
         assert simulator.slave_variables(0)[0].name.decode() == "outs[0]"
         assert simulator.slave_variables(0)[0].reference == 0
         assert simulator.slave_variables(0)[0].type == CosimVariableType.REAL.value
-        assert simulator.slave_variables(0)[0].causality == CosimVariableCausality.OUTPUT.value
-        assert simulator.slave_variables(0)[0].variability == CosimVariableVariability.CONTINUOUS.value
+        assert (
+            simulator.slave_variables(0)[0].causality
+            == CosimVariableCausality.OUTPUT.value
+        )
+        assert (
+            simulator.slave_variables(0)[0].variability
+            == CosimVariableVariability.CONTINUOUS.value
+        )
 
     #    assert simulator.current_time==0, "Simulator current_time"
     if what != "crane":
@@ -149,20 +163,38 @@ def perform_test(what="crane-with-table"):
     f_t = CosimObserver.create_time_series()
     simulator.add_observer(observer=f_t)
     if what == "crane" or what == "crane-with-table":  # observe crane output
-        assert f_t.start_time_series(slave_index=iCrane, value_reference=9, variable_type=CosimVariableType.REAL)
-        assert f_t.start_time_series(slave_index=iCrane, value_reference=10, variable_type=CosimVariableType.REAL)
-        assert f_t.start_time_series(slave_index=iCrane, value_reference=11, variable_type=CosimVariableType.REAL)
+        assert f_t.start_time_series(
+            slave_index=iCrane, value_reference=9, variable_type=CosimVariableType.REAL
+        )
+        assert f_t.start_time_series(
+            slave_index=iCrane, value_reference=10, variable_type=CosimVariableType.REAL
+        )
+        assert f_t.start_time_series(
+            slave_index=iCrane, value_reference=11, variable_type=CosimVariableType.REAL
+        )
     manipulator = CosimManipulator.create_override()
     simulator.add_manipulator(manipulator=manipulator)
     if what == "crane" or what == "crane-with-table":  # manipulate crane
-        simulator.real_initial_value(slave_index=iCrane, variable_reference=11, value=1.0)
-        manipulator.slave_real_values(slave_index=iCrane, variable_references=[11, 12, 13], values=[1.0, 1.0, 0.0])
+        simulator.real_initial_value(
+            slave_index=iCrane, variable_reference=11, value=1.0
+        )
+        manipulator.slave_real_values(
+            slave_index=iCrane, variable_references=[11, 12, 13], values=[1.0, 1.0, 0.0]
+        )
 
-    simulator.simulate_until(target_time=1e9)  # automatic stepping with stopTime in nanos (alternative: .step())
+    simulator.simulate_until(
+        target_time=1e9
+    )  # automatic stepping with stopTime in nanos (alternative: .step())
     if what == "crane" or what == "crane-with-table":  # extract and print crane data
-        t, s, torque0 = f_t.time_series_real_samples(iCrane, value_reference=9, from_step=1, sample_count=11)
-        t, s, torque1 = f_t.time_series_real_samples(iCrane, value_reference=10, from_step=1, sample_count=11)
-        t, s, torque2 = f_t.time_series_real_samples(iCrane, value_reference=11, from_step=1, sample_count=11)
+        t, s, torque0 = f_t.time_series_real_samples(
+            iCrane, value_reference=9, from_step=1, sample_count=11
+        )
+        t, s, torque1 = f_t.time_series_real_samples(
+            iCrane, value_reference=10, from_step=1, sample_count=11
+        )
+        t, s, torque2 = f_t.time_series_real_samples(
+            iCrane, value_reference=11, from_step=1, sample_count=11
+        )
         for i in range(len(t)):
             print(f"{t[i]/1e9}, {torque0[i]}, {torque1[i]}, {torque2[i]}")
     print(f"Simulation {what} finalized")

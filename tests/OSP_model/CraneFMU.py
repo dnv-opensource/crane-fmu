@@ -1,6 +1,7 @@
 from crane_fmu.crane import Crane
 from crane_fmu.boom import Boom
 
+
 class MobileCrane(Crane):
     """Simple mobile crane for FMU testing purposes.
     The crane has a short pedestal, one variable-length stiff boom and a rope.
@@ -12,18 +13,20 @@ class MobileCrane(Crane):
 
     def __init__(
         self,
-        name: str="mobile_crane",
-        description: str="Simple mobile crane (for FMU testing) with short pedestal, one variable-length elevation boom and a rope",
-        author: str="DNV, SEACo project",
-        version: str="0.2",
-        pedestalMass:str="10000.0 kg",
-        pedestalHeight:str="3.0 m",
-        boomMass:str="1000.0 kg",
-        boomLength0:str="8 m",
-        boomLength1: str="50 m",
-        **kwargs: dict[str, str | float]
+        name: str = "mobile_crane",
+        description: str = "Simple mobile crane (for FMU testing) with short pedestal, one variable-length elevation boom and a rope",
+        author: str = "DNV, SEACo project",
+        version: str = "0.2",
+        pedestalMass: str = "10000.0 kg",
+        pedestalHeight: str = "3.0 m",
+        boomMass: str = "1000.0 kg",
+        boomLength0: str = "8 m",
+        boomLength1: str = "50 m",
+        **kwargs: dict[str, str | float],
     ):
-        super().__init__(name=name, description=description, author=author, version=version, **kwargs)
+        super().__init__(
+            name=name, description=description, author=author, version=version, **kwargs
+        )
         pedestal = Boom(
             name="pedestal",
             description="The crane base, on one side fixed to the vessel and on the other side the first crane boom is fixed to it. The mass should include all additional items fixed to it, like the operator's cab",

@@ -29,7 +29,9 @@ class Crane(Model):
         **kwargs,
     ):
         """Initialize the crane object."""
-        super().__init__(name=name, description=description, author=author, version=version, **kwargs)
+        super().__init__(
+            name=name, description=description, author=author, version=version, **kwargs
+        )
         self._boom0 = None  # placeholder for the first boom
         self.animation = None  # if animation object is defined, this will be set and cause re-drawing during simulation
         self._craneAngularVelocity = VariableNP(
@@ -41,9 +43,13 @@ class Crane(Model):
             variability="continuous",
             value0=("0.0 rad/s", 0.0, 0.0, 0.0),
             on_step=lambda t, dT: (
-                self.boom0.rotate(rot=self.craneAngularVelocity) if np.any(self.craneAngularVelocity != 0) else None
+                self.boom0.rotate(rot=self.craneAngularVelocity)
+                if np.any(self.craneAngularVelocity != 0)
+                else None
             ),
-            on_set=lambda vec: Rot.from_rotvec(vec[0] * np.array(vec[1:]), degrees=False),
+            on_set=lambda vec: Rot.from_rotvec(
+                vec[0] * np.array(vec[1:]), degrees=False
+            ),
         )
         self._craneVelocity = VariableNP(
             self,
@@ -54,7 +60,9 @@ class Crane(Model):
             variability="continuous",
             value0=("0.0 m/s", 0.0, 0.0, 0.0),
             on_step=lambda t, dT: (
-                self.boom0.translate(vec=self.craneVelocity * dT) if np.any(self.craneVelocity != 0) else None
+                self.boom0.translate(vec=self.craneVelocity * dT)
+                if np.any(self.craneVelocity != 0)
+                else None
             ),
             on_set=quantity_direction,
         )
@@ -90,7 +98,9 @@ class Crane(Model):
 
     @boom0.setter
     def boom0(self, newVal):
-        assert isinstance(newVal, Boom), f"A boom object expected as first boom on crane. Got {type(newVal)}"
+        assert isinstance(
+            newVal, Boom
+        ), f"A boom object expected as first boom on crane. Got {type(newVal)}"
         self._boom0 = newVal
 
     def booms(self, reverse=False):
@@ -149,7 +159,7 @@ class Animation:
     def __init__(
         self,
         crane: Crane,
-        elements: dict|None = None,
+        elements: dict | None = None,
         interval: float = 0.1,
         figsize=(9, 9),
         xlim=(-10, 10),
@@ -171,7 +181,7 @@ class Animation:
         ax.set_zlim(*zlim)
         ax.view_init(elev=viewAngle[0], azim=viewAngle[1], roll=viewAngle[2])
         sub: list[list] = [[], [], []]
-        if isinstance( self.elements, dict):
+        if isinstance(self.elements, dict):
             for b in self.crane.booms():  # walk along the series of booms
                 if "booms" in self.elements:  # draw booms
                     self.elements["booms"].append(
@@ -182,7 +192,9 @@ class Animation:
                             linewidth=b.animationLW,
                         )
                     )
-                if "c_m" in self.elements:  # write mass of boom as string on center of mass point
+                if (
+                    "c_m" in self.elements
+                ):  # write mass of boom as string on center of mass point
                     self.elements["c_m"].append(
                         ax.text(
                             b.c_m[0],
@@ -197,7 +209,9 @@ class Animation:
                         sub[i].append(b.c_m_sub[1][i])
             if "c_m_sub" in self.elements and len(sub[0]):
                 self.elements["c_m_sub"].append(
-                    ax.plot(sub[0], sub[1], sub[2], marker="*", color="red", linestyle="")
+                    ax.plot(
+                        sub[0], sub[1], sub[2], marker="*", color="red", linestyle=""
+                    )
                 )  # need to put them in as plot and not scatter3d, such that coordinates can be changed in a good way
             if "currentTime" in self.elements:
                 self.elements["currentTime"].append(
@@ -230,7 +244,9 @@ class Animation:
         if "c_m_sub" in self.elements and len(sub[0]):
             self.elements["c_m_sub"][0][0].set_data_3d(sub[0], sub[1], sub[2])
         if "currentTime" in self.elements and currentTime is not None:
-            self.elements["currentTime"][0].set_text("time=" + str(round(currentTime, 1)))
+            self.elements["currentTime"][0].set_text(
+                "time=" + str(round(currentTime, 1))
+            )
 
         self.fig.canvas.draw_idle()  # drawing updated values
         self.fig.canvas.flush_events()  # This will run the GUI event loop until all UI events currently waiting have been processed

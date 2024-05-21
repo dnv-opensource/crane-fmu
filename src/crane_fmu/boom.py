@@ -8,6 +8,7 @@ from component_model.model import Model  # type: ignore
 from component_model.variable import Variable, VariableNP, spherical_to_cartesian  # type: ignore
 from scipy.spatial.transform import Rotation as Rot  # type: ignore
 
+
 class BoomInitError(Exception):
     """Special error indicating that something is wrong with the boom definition."""
 
@@ -97,7 +98,10 @@ class Boom(object):
         mass: str | None = None,
         centerOfMass: float | tuple[float | str, float | str, float | str] = 0.5,
         boom: tuple[float | str, float | str, float | str] | None = None,
-        boomRng: tuple[Optional[float], Optional[float], tuple[float | str, float | str]] | None = None,
+        boomRng: tuple[
+            Optional[float], Optional[float], tuple[float | str, float | str]
+        ]
+        | None = None,
         dampingQ: float = 0.0,
         animationLW: int = 5,
     ):
@@ -108,10 +112,13 @@ class Boom(object):
         elif isinstance(anchor0, Boom):  # append this boom to anchor0
             self._model = anchor0._model
             self._anchor0 = anchor0
-            self._anchor0.anchor1 = self  # register this boom as the Boom fixed to the previous
+            self._anchor0.anchor1 = (
+                self  # register this boom as the Boom fixed to the previous
+            )
         else:
             raise BoomInitError(
-                "The anchor0 parameter of a Boom must be a Crane object or a Boom object. Found: " + str(type(anchor0))
+                "The anchor0 parameter of a Boom must be a Crane object or a Boom object. Found: "
+                + str(type(anchor0))
             )
         self._name = name
         self.description = description
@@ -128,9 +135,13 @@ class Boom(object):
             variability="fixed",
             value0=mass,
         )
-        self.mass = getattr(self._model, self._name + "_mass")  # access to value (owned by model)
+        self.mass = getattr(
+            self._model, self._name + "_mass"
+        )  # access to value (owned by model)
         if not len(str(self._mass.unit)):
-            print(f"Warning: Missing unit for mass of boom {self._name}. Include that in the 'mass' parameter")
+            print(
+                f"Warning: Missing unit for mass of boom {self._name}. Include that in the 'mass' parameter"
+            )
         self._boom = VariableNP(
             self._model,
             self._name + "_boom",
@@ -140,16 +151,24 @@ class Boom(object):
             value0=boom,
             rng=boomRng,
         )
-        self.boom = getattr(self._model, self._name + "_boom")  # access to value (owned by model)
+        self.boom = getattr(
+            self._model, self._name + "_boom"
+        )  # access to value (owned by model)
         assert (
             self.boom[0] > 0 and self._boom.range[0][0] > 0
         ), f"The length of boom {self._name} can become zero, which should not be allowed"
 
-        self.direction = spherical_to_cartesian(self._boom.value0)  # cartesian direction of boom
-        if self._anchor0 is None:  # the first boom, anchored at fixed platform or on vessel
+        self.direction = spherical_to_cartesian(
+            self._boom.value0
+        )  # cartesian direction of boom
+        if (
+            self._anchor0 is None
+        ):  # the first boom, anchored at fixed platform or on vessel
             self.point0 = np.array((0, 0, 0), dtype="float64")  # origo
         else:
-            self.point0 = anchor0.point1  # the starting point of the boom in the coordinate system of the first boom
+            self.point0 = (
+                anchor0.point1
+            )  # the starting point of the boom in the coordinate system of the first boom
 
         self._tip = VariableNP(  # expose point1
             self._model,
@@ -182,15 +201,26 @@ class Boom(object):
             "Position of the Center of Mass along the boom (line), relative to the total length",
             causality="input",
             variability="continuous",
-            value0=((centerOfMass, 0, 0) if not isinstance(centerOfMass, tuple) else centerOfMass),
+            value0=(
+                (centerOfMass, 0, 0)
+                if not isinstance(centerOfMass, tuple)
+                else centerOfMass
+            ),
             rng=((1e-6, 1.0), (None, None), (None, None)),
         )
-        self.centerOfMass = getattr(self._model, self._name + "_centerOfMass")  # access to value (owned by model)
+        self.centerOfMass = getattr(
+            self._model, self._name + "_centerOfMass"
+        )  # access to value (owned by model)
         self._c_m = self.c_m  # save the current value, running method self.c_m
-        self._c_m_sub = [self.mass, self._c_m]  # 'isolated' value as placeholder. Updated by calc_statics_dynamics
+        self._c_m_sub = [
+            self.mass,
+            self._c_m,
+        ]  # 'isolated' value as placeholder. Updated by calc_statics_dynamics
 
         # some input variables (connectors)
-        self.angularVelocity = getattr(self._model, self._name + "_angularVelocity")  # access to value (owned by model)
+        self.angularVelocity = getattr(
+            self._model, self._name + "_angularVelocity"
+        )  # access to value (owned by model)
         self._angularVelocity = Variable(
             self._model,
             name=self._name + "_angularVelocity",
@@ -199,10 +229,16 @@ class Boom(object):
             variability="continuous",
             value0="0.0 rad/s",
             rng=(),
-            on_step=lambda t, dT: (self.rotate(angle=self.angularVelocity) if self.angularVelocity != 0 else None),
+            on_step=lambda t, dT: (
+                self.rotate(angle=self.angularVelocity)
+                if self.angularVelocity != 0
+                else None
+            ),
         )
 
-        self.lengthVelocity = getattr(self._model, self._name + "_lengthVelocity")  # access to value (owned by model)
+        self.lengthVelocity = getattr(
+            self._model, self._name + "_lengthVelocity"
+        )  # access to value (owned by model)
         self._lengthVelocity = Variable(
             self._model,
             name=self._name + "_lengthVelocity",
@@ -212,7 +248,9 @@ class Boom(object):
             value0="0.0 m/s",
             rng=(0, float("inf")),
             on_step=lambda t, dT: (
-                self.change_length(dL=self.lengthVelocity, dT=dT) if self.lengthVelocity != 0 else None
+                self.change_length(dL=self.lengthVelocity, dT=dT)
+                if self.lengthVelocity != 0
+                else None
             ),
         )
 
@@ -258,7 +296,12 @@ class Boom(object):
             for _ in range(idx):
                 b = b.anchor1
                 if b is None:
-                    raise IndexError("Erroneous index " + str(idx) + " with respect to boom " + self.name)
+                    raise IndexError(
+                        "Erroneous index "
+                        + str(idx)
+                        + " with respect to boom "
+                        + self.name
+                    )
             return b
         else:
             while b.anchor1 is not None:  # spool to tail
@@ -266,7 +309,12 @@ class Boom(object):
             for _ in range(abs(idx) - 1):  # go back from tail
                 b = b.anchor0
                 if b is None:
-                    raise IndexError("Erroneous index " + str(idx) + " with respect to boom " + self.name)
+                    raise IndexError(
+                        "Erroneous index "
+                        + str(idx)
+                        + " with respect to boom "
+                        + self.name
+                    )
             return b
 
     @property
@@ -300,7 +348,9 @@ class Boom(object):
     @property
     def c_m(self):
         """Return the local center of mass point relative to self.point0."""
-        return self.centerOfMass[0] * self.direction + np.array((self.centerOfMass[1], self.centerOfMass[2], 0))
+        return self.centerOfMass[0] * self.direction + np.array(
+            (self.centerOfMass[1], self.centerOfMass[2], 0)
+        )
 
     @property
     def c_m_absolute(self):
@@ -338,7 +388,9 @@ class Boom(object):
             # updated _c_m_sub as absolute position
             self._c_m_sub = [mS + m, (cs * m + mS * posS) / (mS + m)]
 
-        self.torque = self._c_m_sub[0] * np.cross(self.direction, np.array((0, 0, -9.81)))  # static torque
+        self.torque = self._c_m_sub[0] * np.cross(
+            self.direction, np.array((0, 0, -9.81))
+        )  # static torque
         if dT is not None:  # the time for the movement is provided (dynamic analysis)
             velocity0 = np.array(self.velocity)
             # check for pendulum movements and implement for this time interval if relevant
@@ -349,7 +401,9 @@ class Boom(object):
                 acceleration = (self.velocity - velocity0) / dT
             self.torque += self._c_m_sub[0] * np.cross(self.direction, acceleration)
             # linear force due to acceleration in boom direction
-            self.force = self._c_m_sub[0] / self.length * np.dot(self.direction, acceleration)
+            self.force = (
+                self._c_m_sub[0] / self.length * np.dot(self.direction, acceleration)
+            )
 
     def _pendulum(self, dT: float):
         """For a non-stiff connection, if the _c_m is not exactly below point0, the _c_m acts as a damped pendulum.
@@ -370,7 +424,9 @@ class Boom(object):
         ..toDo:: for high initial velocities the energy increases! Check that.
         """
         if self.dampingQ != 0.0:
-            assert self.anchor1 is None, "Pendulum movement is so far only implemented for the last boom (the rope)"
+            assert (
+                self.anchor1 is None
+            ), "Pendulum movement is so far only implemented for the last boom (the rope)"
             # center of mass factor (we look on the c_m with respect to pendulum movements):
             c = self.centerOfMass[0]
             assert (
@@ -379,8 +435,12 @@ class Boom(object):
             R = c * self.length  # pendulum radius
             r = c * np.array(self.direction)  # the current radius (of c_m) as copy
             rDot = self.velocity  # this is correct if _c_m == _c_m_sub
-            if R > 1e-6 and abs(self.direction[2] / self.length) > 1e-10:  # pendulum movement
-                term1 = np.cross(r, np.cross(r, np.array((0.0, 0.0, -9.81), dtype="float64"))) / (R * R)
+            if (
+                R > 1e-6 and abs(self.direction[2] / self.length) > 1e-10
+            ):  # pendulum movement
+                term1 = np.cross(
+                    r, np.cross(r, np.array((0.0, 0.0, -9.81), dtype="float64"))
+                ) / (R * R)
                 term2 = np.dot(rDot, rDot) / (R * R) * r
                 acceleration = -(term1 + term2 + self._decayRate * rDot)
                 newVelocity = rDot + acceleration * dT
@@ -406,7 +466,9 @@ class Boom(object):
         elif newLength == 0.0:
             return 0
         else:
-            return sqrt(9.81 / (newLength * self.centerOfMass[0])) / sqrt(4 * self.dampingQ - 1)
+            return sqrt(9.81 / (newLength * self.centerOfMass[0])) / sqrt(
+                4 * self.dampingQ - 1
+            )
 
     def rotate(
         self,
@@ -429,7 +491,9 @@ class Boom(object):
             static (bool)=False: Optionally assume static boom movement (relevant only for rope - dampingQ!=0)
               If static=True it is assumed that the rotation happens in infinite time, so that rope direction wrt. origin remains constant (down).
         """
-        if rot is None:  # the rotation is not fully specified through the rotation object
+        if (
+            rot is None
+        ):  # the rotation is not fully specified through the rotation object
             if angle == 0.0:
                 return  # nothing to rotate
             if origin is None and axis is None:
@@ -439,13 +503,17 @@ class Boom(object):
                 axis = self.axis
             msg = f"{self.name}. The angle and axis cannot be None (keep rotation) if the rotation is undefined"
             assert angle is not None and axis is not None, msg
-            rot = Rot.from_rotvec(angle * axis, degrees=asDeg)  # define the rotation object
+            rot = Rot.from_rotvec(
+                angle * axis, degrees=asDeg
+            )  # define the rotation object
 
         if rot.magnitude() == 0.0:  # nothing to rotate
             return
         p0 = np.array(self.point0)  # keep a copy (needed for rope calculation below)
         if origin is not None:  # rotation initiated from boom we are connecting to
-            self.point0 = self.anchor0.point1  # adapt point0 to the rotation of the previous boom
+            self.point0 = (
+                self.anchor0.point1
+            )  # adapt point0 to the rotation of the previous boom
             if self.axis is not None:
                 self.axis = rot.apply(self.axis)  # rotate the axis itself
 
@@ -454,19 +522,25 @@ class Boom(object):
             self.direction = rot.apply(self.direction)
             #            print(" => ", self.direction)
             self._c_m = self.c_m  # update the relative position of the center of mass
-        elif not static:  # with a rope, the c_m tries to stay where it was. Only the (max) rope length is ensured
+        elif (
+            not static
+        ):  # with a rope, the c_m tries to stay where it was. Only the (max) rope length is ensured
             length = self.length
             newDir = p0 - self.point0 + self._c_m
             newLen = np.linalg.norm(newDir)
             self.direction = newDir * length / newLen
-            self._c_m = self.c_m  # measured relative to point0 and must therefore be updated
+            self._c_m = (
+                self.c_m
+            )  # measured relative to point0 and must therefore be updated
 
         if self._anchor1 is not None:  # cascade the rotation to connected booms
             if origin is None:
                 # we need to relate to point0 of this boom, as the originator of the rotation
                 self.anchor1.rotate(origin=self.point0, rot=rot, static=static)
             else:
-                self.anchor1.rotate(origin=origin, rot=rot, static=static)  # keep the origin
+                self.anchor1.rotate(
+                    origin=origin, rot=rot, static=static
+                )  # keep the origin
         # call from crane: self.calc_statics_dynamics( dT, origin is None) # re-calculate the static and dynamic properties and inform parent booms if needed
 
     def translate(self, vec: tuple[float] | np.ndarray):
@@ -494,12 +568,16 @@ class Boom(object):
             isInitiator (bool)=True: denotes whether this boom is the initiator of the movement
             dT (float)=None: Optional possibility to provide an explicit time for dynamic calculations
         """
-        assert self._boom._range[0] is not None, f"The length of boom {self.name} is not changeable."
+        assert (
+            self._boom._range[0] is not None
+        ), f"The length of boom {self.name} is not changeable."
         # ToDO: make better test
         # need to remember that (as copy):
         before = np.array(self.point1, dtype="float64")
         L = self.length
-        assert L + dL > 1e-6, f"Boom length {L} cannot become negative or zero. Change: {dL}."
+        assert (
+            L + dL > 1e-6
+        ), f"Boom length {L} cannot become negative or zero. Change: {dL}."
         if self.dampingQ == 0 or dL <= 0:  # stiff boom or boom (rope) getting shorter
             relDL = (L + dL) / L if L > 0 else dL
             self.direction = relDL * self.direction
