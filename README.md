@@ -1,9 +1,10 @@
-# my-package
-my-package is an example package
+# Crane FMU
 
-my-package supports
-* ..
-
+Introduction
+------------
+The package includes the necessary modules to construct a crane model according to the fmi, OSP and DNV-RP-0513 standards.
+The model shall be used as part of the SEACo project and as a demonstration model for (efficient) usage of the DNV-RP-0513,
+Assurance of Simulation Models.
 
 ## Installation
 
