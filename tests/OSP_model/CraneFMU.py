@@ -24,9 +24,7 @@ class MobileCrane(Crane):
         boomLength1: str = "50 m",
         **kwargs: dict[str, str | float],
     ):
-        super().__init__(
-            name=name, description=description, author=author, version=version, **kwargs
-        )
+        super().__init__(name=name, description=description, author=author, version=version, **kwargs)
         pedestal = Boom(
             name="pedestal",
             description="The crane base, on one side fixed to the vessel and on the other side the first crane boom is fixed to it. The mass should include all additional items fixed to it, like the operator's cab",

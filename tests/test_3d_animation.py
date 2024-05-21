@@ -35,9 +35,7 @@ ax.set_zlabel("Z")
 
 print("Before animation.", N, len(data))
 
-ani = animation.FuncAnimation(
-    fig, update, frames=N, fargs=(data, line), interval=10000 / N, blit=False
-)
+ani = animation.FuncAnimation(fig, update, frames=N, fargs=(data, line), interval=10000 / N, blit=False)
 explanation = """
 class matplotlib.animation.FuncAnimation(fig, func, frames=None, init_func=None, fargs=None, save_count=None, *, cache_frame_data=True, **kwargs)
 `FuncAnimation <https://matplotlib.org/stable/api/_as_gen/matplotlib.animation.FuncAnimation.html>`_

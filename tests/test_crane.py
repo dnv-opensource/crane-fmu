@@ -116,9 +116,7 @@ def test_initial(crane: Crane, onlyVariable: bool = True):
         bs = crane.booms(reverse=True)
         if rope is None:
             b = next(bs)
-            assert (
-                b.name == "boom 2"
-            ), f"First reversed should be 'boom2'. Found {b.name}"
+            assert b.name == "boom 2", f"First reversed should be 'boom2'. Found {b.name}"
         else:
             assert next(bs).name == "rope", "First reversed should be 'rope'"
             assert next(bs).name == "boom 2", "Next reversed should be 'boom 2'"
@@ -131,17 +129,11 @@ def test_initial(crane: Crane, onlyVariable: bool = True):
             assert pedestal[-1].name == "rope", "pedestal[-1] should be 'rope'"
             assert pedestal[-2].name == "boom 2", "pedestal[-2] should be 'boom 2'"
 
-        assert (
-            list(pedestal.iter())[1].name == "boom 1"
-        ), "'boom 1' from boom iteration expected"
+        assert list(pedestal.iter())[1].name == "boom 1", "'boom 1' from boom iteration expected"
         if rope is None:
-            assert (
-                list(boom2.iter(reverse=True))[1].name == "boom 1"
-            ), "'boom 1' from reversed boom iteration expected"
+            assert list(boom2.iter(reverse=True))[1].name == "boom 1", "'boom 1' from reversed boom iteration expected"
         else:
-            assert (
-                list(rope.iter(reverse=True))[1].name == "boom 2"
-            ), "'boom 2' from reversed boom iteration expected"
+            assert list(rope.iter(reverse=True))[1].name == "boom 2", "'boom 2' from reversed boom iteration expected"
 
         assert pedestal.length == 3.0
         assert boom1.length == 10.0
@@ -173,25 +165,19 @@ def test_sequence(show: bool = True):
     np_arrays_equal(r.point0 + r.direction, (0, 0, 3 + 10 - 5 - 0.5))
     # boom1 45 deg up
     b1.rotate(angle=+45, asDeg=True, static=True)
-    np_arrays_equal(
-        r.point0 + r.direction, [(10 - 5) / sqrt(2), 0, 3 - 0.5 + (10 - 5) / (sqrt(2))]
-    )
+    np_arrays_equal(r.point0 + r.direction, [(10 - 5) / sqrt(2), 0, 3 - 0.5 + (10 - 5) / (sqrt(2))])
     if show:
         show_it(crane, markCOM=True, markSubCOM=True)
     # boom2 180 deg (in line with boom1)
     b2.rotate(angle=180, asDeg=True, static=True)
-    np_arrays_equal(
-        r.point0 + r.direction, [(10 + 5) / sqrt(2), 0, 3 - 0.5 + (10 + 5) / (sqrt(2))]
-    )
+    np_arrays_equal(r.point0 + r.direction, [(10 + 5) / sqrt(2), 0, 3 - 0.5 + (10 + 5) / (sqrt(2))])
     if show:
         show_it(crane, markCOM=True, markSubCOM=True)
     # rope 0.5m -> 5m
     r.change_length(4.5)
     if show:
         show_it(crane, markCOM=True, markSubCOM=True)
-    np_arrays_equal(
-        r.point0 + r.direction, [(10 + 5) / sqrt(2), 0, 3 - 5 + (10 + 5) / (sqrt(2))]
-    )
+    np_arrays_equal(r.point0 + r.direction, [(10 + 5) / sqrt(2), 0, 3 - 5 + (10 + 5) / (sqrt(2))])
     # turn base 45 deg
     p.rotate(angle=45, asDeg=True, static=True)
     np_arrays_equal(
@@ -224,12 +210,8 @@ def test_rotate_instant(show: bool = True):
     if show:
         show_it(crane, markCOM=True, markSubCOM=True)
     b1.rotate(angle=90, asDeg=True, static=False)
-    assert (
-        len0 == r.length
-    ), "Length {len0} should not change during rotation. Found {r.length} after"
-    np_arrays_equal(
-        a_c_m0, r.c_m_absolute
-    )  # instantaneous rotations try to keep the c_m constant
+    assert len0 == r.length, "Length {len0} should not change during rotation. Found {r.length} after"
+    np_arrays_equal(a_c_m0, r.c_m_absolute)  # instantaneous rotations try to keep the c_m constant
     #    print(f"AFTER: rop0={r.point0}, abs.c_m={r.c_m_absolute}, length={r.length}, rope1={r.point0+r.direction}")
     if show:
         show_it(crane, markCOM=True, markSubCOM=True)
