@@ -1,2 +1,2 @@
-FMPy>=3.9
+FMPy>=0.3.20
 matplotlib>=3.7.1
