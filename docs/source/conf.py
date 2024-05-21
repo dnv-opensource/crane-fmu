@@ -10,20 +10,26 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+
 import os
 import sys
+import shutil
 
-sys.path.insert(0, os.path.abspath("../../src"))
+
+sys.path.insert(0, os.path.abspath("../_ext"))
+sys.path.insert(0, os.path.abspath("../../"))
+shutil.copyfile("../../README.md", "readme.md")
 
 
 # -- Project information -----------------------------------------------------
 
-project = "my-package"
-copyright = "2024, DNV AS. All rights reserved."
-author = "Author One, Author Two, Author Three"
+project = "Crane FMU"
+copyright = "2023, Siegfried Eisinger and Magnus Steinstø"
+author = "Siegfried Eisinger and Magnus Steinstø"
 
 # The full version, including alpha/beta/rc tags
-release = "0.1.6"
+release = "0.1"
+
 
 # -- General configuration ---------------------------------------------------
 
@@ -31,20 +37,23 @@ release = "0.1.6"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "myst_parser",
+    "myst_parser",  # to handle README.md
+    "sphinx.ext.todo",
+    "get_from_code",
+    "spec",
+    "sphinx.ext.napoleon",  # to read nupy docstrings
     "sphinx.ext.autodoc",
-    "sphinx.ext.napoleon",
-    "sphinx_argparse_cli",
+    "sphinx.ext.graphviz",
+    "sphinx.ext.inheritance_diagram",
+    "sphinx.ext.autosectionlabel",
 ]
+todo_include_todos = True
+spec_include_specs = True
 
-# The file extensions of source files.
-source_suffix = {
-    ".rst": "restructuredtext",
-    ".md": "markdown",
-}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
+autoclass_content = "both"  # both __init__ and class docstring
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -57,8 +66,15 @@ exclude_patterns = []
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "furo"
-html_logo = "_static/my_package.svg"
+html_theme = "classic"  # alabaster'
+html_theme_options = {
+    "rightsidebar": "false",
+    "stickysidebar": "true",
+    "relbarbgcolor": "black",
+    "body_min_width": "700px",
+    "body_max_width": "900px",
+    "sidebarwidth": "250px",
+}
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
