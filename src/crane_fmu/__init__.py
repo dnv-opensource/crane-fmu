@@ -1,1 +1,1 @@
-
+from .boom import Boom
