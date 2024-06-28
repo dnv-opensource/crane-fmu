@@ -30,21 +30,12 @@ class Crane(Model):
     ):
         """Initialize the crane object."""
         super().__init__(name=name, description=description, author=author, version=version, **kwargs)
-        self._boom0 = None  # placeholder for the first boom
-        self.animation = None  # if animation object is defined, this will be set and cause re-drawing during simulation
-        self._craneAngularVelocity = VariableNP(
-            self,
-            name="craneAngularVelocity",
-            description="""Rotates the crane base, e.g. due to vessel roll and pitch. Defined as 3D rotation axis cartesian vector,
-                         where the normal denotes the (right-handed) rotation direction and the length denotes the rotation velocity in rad/s""",
-            causality="input",
-            variability="continuous",
-            value0=("0.0 rad/s", 0.0, 0.0, 0.0),
-            on_step=lambda t, dT: (
-                self.boom0.rotate(rot=self.craneAngularVelocity) if np.any(self.craneAngularVelocity != 0) else None
-            ),
-            on_set=lambda vec: Rot.from_rotvec(vec[0] * np.array(vec[1:]), degrees=False),
-        )
+        self._boom0 = Boom(self, "fixation",
+                           "Fixation point of the crane to its parent object or fixed ground. Pseudo-boom object",
+                           anchor0 = None, mass = "1e-10kg",
+                           boom = (1e-10,'0 deg', '0 deg'),
+                           boom_rng = ( None, (0, '180 deg'), ('-180 deg', '180 deg')))
+        self.animation = None,  # if animation object is defined, this will be set and cause re-drawing during simulation
         self._craneVelocity = VariableNP(
             self,
             name="craneVelocity",
@@ -111,10 +102,18 @@ class Crane(Model):
                 return b
         raise ModelOperationError("Unknown boom " + name)
 
+    def add_boom(self, *args, **kvargs):
+        if 'anchor0' not in kvargs:
+            last = next(self.booms(reverse=True))
+            kvargs.update( {'anchor0': last})
+        return Boom( self, *args, **kvargs)
+
     def calc_statics_dynamics(self, dT=None):
         """Run the calc_statics_dynamics on all booms in reverse order, to get all Boom._c_m_sub and dynamics updated."""
-        for b in self.booms(reverse=True):
-            b.calc_statics_dynamics(dT)
+        try:
+            next(self.booms(reverse=True)).calc_statics_dynamics(dT)
+        except StopIteration:
+            pass
 
     def do_step(self, currentTime, stepSize):
         """Do a simulation step of size 'stepSize at time 'currentTime.
@@ -123,15 +122,17 @@ class Crane(Model):
         .. assumption:: rotation axis of internal booms is always known. For normal booms that is obvious.
           For rope, the axis is caused by previous movement and is thus known as internal data.
         """
-        _ = super().do_step(currentTime, stepSize)  # generic model step activities
+        status = super().do_step(currentTime, stepSize)  # generic model step activities
         # after all changed input variables are taken into account, update the statics and dynamics of the system
         self.calc_statics_dynamics(dT=stepSize)
-        if self.animation is not None:
+        #print(f"CRANE.do_step {currentTime}. calc_statics_dynamics: {status}")
+        if None not in self.animation:
             self.animation.update(currentTime)
         self.craneTorque = self.boom0.torque
         #        print("Torque: (" + str(round(currentTime, 2)) + ")", self.craneTorque)
-        #        print(f"Time {currentTime}, {self.boom0[1].name}, {self.boom0[1].point1}, {self.boom0[1]._tip.getter()}")
-        return True
+        #        print(f"Time {currentTime}, {self.boom0[1].name}, {self.boom0[1].end}, {self.boom0[1]._tip.getter()}")
+        print(f"CRANE.do_step {currentTime}. Done. animation:{self.animation}")
+        return status
 
 
 class Animation:
@@ -149,7 +150,7 @@ class Animation:
     def __init__(
         self,
         crane: Crane,
-        elements: dict | None = None,
+        elements: dict|None = None,
         interval: float = 0.1,
         figsize=(9, 9),
         xlim=(-10, 10),
@@ -171,14 +172,14 @@ class Animation:
         ax.set_zlim(*zlim)
         ax.view_init(elev=viewAngle[0], azim=viewAngle[1], roll=viewAngle[2])
         sub: list[list] = [[], [], []]
-        if isinstance(self.elements, dict):
+        if isinstance( self.elements, dict):
             for b in self.crane.booms():  # walk along the series of booms
                 if "booms" in self.elements:  # draw booms
                     self.elements["booms"].append(
                         ax.plot(
-                            [b.point0[0], b.point1[0]],
-                            [b.point0[1], b.point1[1]],
-                            [b.point0[2], b.point1[2]],
+                            [b.origin[0], b.end[0]],
+                            [b.origin[1], b.end[1]],
+                            [b.origin[2], b.end[2]],
                             linewidth=b.animationLW,
                         )
                     )
@@ -216,9 +217,9 @@ class Animation:
         for i, b in enumerate(self.crane.booms()):
             if "booms" in self.elements:
                 self.elements["booms"][i][0].set_data_3d(
-                    [b.point0[0], b.point1[0]],
-                    [b.point0[1], b.point1[1]],
-                    [b.point0[2], b.point1[2]],
+                    [b.origin[0], b.end[0]],
+                    [b.origin[1], b.end[1]],
+                    [b.origin[2], b.end[2]],
                 )
             if "c_m" in self.elements:
                 self.elements["c_m"][i].set_x(b.c_m_absolute[0])
