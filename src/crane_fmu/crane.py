@@ -1,11 +1,9 @@
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
-import numpy as np
 from component_model.model import Model, ModelOperationError  # type: ignore
-from component_model.variable import Variable, VariableNP, quantity_direction  # type: ignore
+from component_model.variable import Variable  # type: ignore
 from mpl_toolkits.mplot3d.axes3d import Axes3D  # type: ignore
-from scipy.spatial.transform import Rotation as Rot  # type: ignore
 
 from crane_fmu.boom import Boom
 
@@ -18,6 +16,10 @@ class Crane(Model):
     Args:
         name (str): the name of the crane instant
         description (str) = None: An (optional
+        author (str) = "Siegfried Eisinger (DNV)
+        version (str) = "0.1"
+        u_angle (str) = "deg": angle display units (internally radians are used)
+        u_time (str) = 's': time display units (internally seconds are used)
     """
 
     def __init__(
@@ -26,54 +28,45 @@ class Crane(Model):
         description: str = "A crane model",
         author: str = "Siegfried Eisinger (DNV)",
         version: str = "0.1",
+        u_angle: str = "deg",
+        u_time: str = "s",
         **kwargs,
     ):
         """Initialize the crane object."""
         super().__init__(name=name, description=description, author=author, version=version, **kwargs)
-        self._boom0 = Boom(self, "fixation",
-                           "Fixation point of the crane to its parent object or fixed ground. Pseudo-boom object",
-                           anchor0 = None, mass = "1e-10kg",
-                           boom = (1e-10,'0 deg', '0 deg'),
-                           boom_rng = ( None, (0, '180 deg'), ('-180 deg', '180 deg')))
-        self.animation = None,  # if animation object is defined, this will be set and cause re-drawing during simulation
-        self._craneVelocity = VariableNP(
+        self.u_angle = u_angle
+        self.u_time = u_time
+        self._boom0 = Boom(
             self,
-            name="craneVelocity",
-            description="""Moves the crane base linearly, e.g. due to vessel acceleration or lifting in waves. Defined as 3D cartesian vector,
-                                                       where the normal denotes the movement direction and the length donotes the movement velocity""",
-            causality="input",
-            variability="continuous",
-            value0=("0.0 m/s", 0.0, 0.0, 0.0),
-            on_step=lambda t, dT: (
-                self.boom0.translate(vec=self.craneVelocity * dT) if np.any(self.craneVelocity != 0) else None
-            ),
-            on_set=quantity_direction,
+            "fixation",
+            "Fixation point of the crane to its parent object or fixed ground. Pseudo-boom object",
+            anchor0=None,
+            mass="1e-10kg",
+            boom=(1e-10, "0" + u_angle, "0" + u_angle),
+            boom_rng=(None, (0, "180" + u_angle), ("-180" + u_angle, "180" + u_angle)),
         )
-        self._changeLoad = Variable(
-            self,
-            name="changeLoad",
-            description="Load added to (or taken off) the end of the last boom (the hook)",
-            causality="input",
-            variability="continuous",
-            value0="0.0 kg",
-            on_step=lambda t, dT: self.boom0[-1].change_mass(self.changeLoad * dT),
-        )
-        #
-        # output variables (connectors):
-        self._craneTorque = VariableNP(
-            self,
-            name="craneTorque",
-            description="Total torque of the crane with respect to its base, i.e. the sum of static and dynamic torques. Provided as 3D spherical vector",
-            causality="output",
-            variability="continuous",
-            initial="exact",
-            value0=("0.0 N*m", "0.0 rad", "0.0 rad"),
-        )
+        self.animation = (
+            None,
+        )  # if animation object is defined, this will be set and cause re-drawing during simulation
+        self.dLoad = 0.0
+        self._interface(u_angle, u_time)  # definition of crane level interface variables
 
-    #         self.craneForce = VariableNP( self, name="CraneForce",
-    #                                           description="Total linear force of the crane with respect to its base, i.e. the sum of static and dynamic forces. Provided as 3D spherical vector)",
-    #                                           causality='output', variability='continuous', initial='exact',
-    #                                           value0=( '0.0 N', '0.0 rad', '0.0 rad'))
+    def _interface(self, u_angle: str, u_time: str):
+        """Define crane level interface variables.
+
+        In addition the added booms define their own sub-variables.
+        Note that the mandatory 'fixation' boom also represents crane level variables like torque and velocity.
+        """
+
+        self._dLoad = Variable(  # input variable
+            self,
+            name="dLoad",
+            description="Load added (or taken off) per time unit to/from the end of the last boom (the hook)",
+            causality="input",
+            variability="continuous",
+            start="0.0 kg" + "/" + u_time,
+            on_step=lambda t, dT: self.boom0[-1].change_mass(self.dLoad * dT),
+        )
 
     @property
     def boom0(self):
@@ -103,10 +96,10 @@ class Crane(Model):
         raise ModelOperationError("Unknown boom " + name)
 
     def add_boom(self, *args, **kvargs):
-        if 'anchor0' not in kvargs:
+        if "anchor0" not in kvargs:
             last = next(self.booms(reverse=True))
-            kvargs.update( {'anchor0': last})
-        return Boom( self, *args, **kvargs)
+            kvargs.update({"anchor0": last})
+        return Boom(self, *args, **kvargs)
 
     def calc_statics_dynamics(self, dT=None):
         """Run the calc_statics_dynamics on all booms in reverse order, to get all Boom._c_m_sub and dynamics updated."""
@@ -117,7 +110,7 @@ class Crane(Model):
 
     def do_step(self, currentTime, stepSize):
         """Do a simulation step of size 'stepSize at time 'currentTime.
-        The input variables with values not equal to their value0 are listed in self.changedVariables.
+        The input variables with values not equal to their start are listed in self.changedVariables.
 
         .. assumption:: rotation axis of internal booms is always known. For normal booms that is obvious.
           For rope, the axis is caused by previous movement and is thus known as internal data.
@@ -125,13 +118,12 @@ class Crane(Model):
         status = super().do_step(currentTime, stepSize)  # generic model step activities
         # after all changed input variables are taken into account, update the statics and dynamics of the system
         self.calc_statics_dynamics(dT=stepSize)
-        #print(f"CRANE.do_step {currentTime}. calc_statics_dynamics: {status}")
+        # print(f"CRANE.do_step {currentTime}. calc_statics_dynamics: {status}")
         if None not in self.animation:
             self.animation.update(currentTime)
-        self.craneTorque = self.boom0.torque
-        #        print("Torque: (" + str(round(currentTime, 2)) + ")", self.craneTorque)
-        #        print(f"Time {currentTime}, {self.boom0[1].name}, {self.boom0[1].end}, {self.boom0[1]._tip.getter()}")
-        print(f"CRANE.do_step {currentTime}. Done. animation:{self.animation}")
+        # print("Torque: (" + str(round(currentTime, 2)) + ")", self.boom0.torque)
+        # res = "".join( x.name+":"+str(x.end) for x in self.booms())
+        # print(f"Time {currentTime}, {res}")
         return status
 
 
@@ -150,7 +142,7 @@ class Animation:
     def __init__(
         self,
         crane: Crane,
-        elements: dict|None = None,
+        elements: dict | None = None,
         interval: float = 0.1,
         figsize=(9, 9),
         xlim=(-10, 10),
@@ -172,7 +164,7 @@ class Animation:
         ax.set_zlim(*zlim)
         ax.view_init(elev=viewAngle[0], azim=viewAngle[1], roll=viewAngle[2])
         sub: list[list] = [[], [], []]
-        if isinstance( self.elements, dict):
+        if isinstance(self.elements, dict):
             for b in self.crane.booms():  # walk along the series of booms
                 if "booms" in self.elements:  # draw booms
                     self.elements["booms"].append(
@@ -189,7 +181,7 @@ class Animation:
                             b.c_m[0],
                             b.c_m[1],
                             b.c_m[2],
-                            s=str(int(b.mass.value0)),
+                            s=str(int(b.mass.start)),
                             color="black",
                         )
                     )

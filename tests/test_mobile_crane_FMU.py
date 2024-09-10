@@ -1,102 +1,69 @@
 import shutil
-from math import radians
+from math import cos, radians, sin, sqrt
+from pathlib import Path
 
+import numpy as np
+import pytest
 from component_model.model import Model
-from crane_fmu.boom import Boom
-from crane_fmu.crane import Crane  # , Animation
 from fmpy import dump, plot_result, simulate_fmu
 from fmpy.validation import validate_fmu
-import pytest
+from mobile_crane import MobileCrane
 
-class MobileCrane(Crane):
-    """Simple mobile crane for FMU testing purposes.
-    The crane has a short pedestal, one variable-length stiff boom and a rope.
-    The size and weight of the various parts can be configured.
-
-    Args:
-        name (str) : name of the crane type
-        description (str) : short description
-        author (str)
-        version (str)
-        pedestalMass (str) : mass of the pedestal - quantity and unit as string
-        pedestalHeight (str) : height (fixed) of the pedestal, with units
-        boomMass (str) : mass of the single boom, with units
-        boomLength0 (str) : minimum length of the boom, with units
-        boomLength1 (str) : maximum length of the boom, with units
-    """
-
-    def __init__(
-        self,
-        name:str ="mobile_crane",
-        description:str ="Simple mobile crane (for FMU testing) with short pedestal, one variable-length elevation boom and a rope",
-        author:str="DNV, SEACo project",
-        version:str="0.2",
-        pedestalMass:str="10000.0 kg",
-        pedestalHeight:str="3.0 m",
-        boomMass:str="1000.0 kg",
-        boomLength0:str="8 m",
-        boomLength1:str="50 m",
-        **kwargs,
-    ):
-        super().__init__(name=name, description=description, author=author, version=version, **kwargs)
-        pedestal = self.add_boom(
-            name="pedestal",
-            description="The crane base, on one side fixed to the vessel and on the other side the first crane boom is fixed to it. The mass should include all additional items fixed to it, like the operator's cab",
-            mass=pedestalMass,
-            centerOfMass=(0.5, "-1m", 0),
-            boom=(pedestalHeight, "0deg", "0deg"),
-            boom_rng=(None, None, ("0deg", "360deg")),
-        )
-        boom = self.add_boom(
-            name="boom",
-            description="The boom. Can be lifted and length can change within the given range",
-            mass=boomMass,
-            centerOfMass=(0.5, 0, 0),
-            boom=(boomLength0, "90deg", "0deg"),
-            boom_rng=((boomLength0, boomLength1), (0, "90deg"), None),
-        )
-        _ = self.add_boom(
-            name="rope",
-            description="The rope fixed to the last boom. Flexible connection",
-            mass="50.0 kg",  # so far basically the hook
-            centerOfMass=0.95,
-            boom=("1e-6 m", "180deg", "0 deg"),
-            boom_rng=(
-                ("1e-6 m", boomLength1),
-                ("90deg", "270deg"),
-                ("-180deg", "180deg"),
-            ),
-            dampingQ=50.0,
-            animationLW=2,
-        )
-        # make sure that _comSub is calculated for all booms:
-        self.calc_statics_dynamics(None)
-
-    def do_step(self, currentTime, stepSize):
-        status = super().do_step(currentTime, stepSize)
-        #print(f"Time {currentTime}, {self.rope_tip}")
-        #print(f"MobileCrane.do_step. Status {status}")
-        return status
+np.set_printoptions(formatter={"float_kind": "{:.2f}".format})
 
 
-def test_make_mobilecrane():
-    asBuilt = Model.build(
-        "test_mobile_crane_FMU.py",
-        project_files=[
-            "../crane_fmu",
-        ],
-    )
+def arrays_equal(arr1, arr2, eps=1e-7):
+    assert len(arr1) == len(arr2), "Length not equal!"
+
+    for i in range(len(arr1)):
+        assert abs(arr1[i] - arr2[i]) < eps, f"Component {i}: {arr1[i]} != {arr2[i]}"
+
+
+def mass_center(xs: tuple):
+    """Calculate the total mass center of a number of point masses provided as 4-tuple"""
+    M, c = 0.0, np.array((0, 0, 0), float)
+    for x in xs:
+        M += x[0]
+        c += x[0] * np.array(x[1:], float)
+    return (M, c / M)
+
+
+def test_mass_center():
+    def do_test(Mc, _M, _c):
+        assert Mc[0] == _M, f"Mass not as expected: {Mc[0]} != {_M}"
+        arrays_equal(Mc[1], _c, 1e-10)
+
+    do_test(mass_center(((1, -1, 0, 0), (1, 1, 0, 0), (2, 0, 0, 0))), 4, (0, 0, 0))
+    do_test(mass_center(((1, 1, 1, 0), (1, 1, -1, 0), (1, -1, -1, 0), (1, -1, 1, 0))), 4, (0, 0, 0))
+
+
+# @pytest.mark.skip("Do not make a new FMU just now")
+def test_make_mobilecrane(show):
+    _ = MobileCrane()
+    # for i in range( len( crane.vars)):
+    #     if crane.vars[i] is not None:
+    #         print( "MODEL_VARIABLE", i, crane.vars[i].name)
+    cwd = Path(__file__).parent
+    asBuilt = Model.build(Path(cwd, "mobile_crane.py"))
     val = validate_fmu(asBuilt.name)
     assert not len(val), f"Validation of the modelDescription of {asBuilt.name} was not successful. Errors: {val}"
-    dump(asBuilt.name)
-    shutil.copy(asBuilt.name, "./OSP_model/")  # copy the created FMU also to the OSP_model folder
-    shutil.copy(asBuilt.name, "../../case_study/tests/data/MobileCrane/")  # ... and to case_study (to be deleted)
+    if show:
+        dump(asBuilt.name)
+    # copy the created FMU also to the OSP_model folder:
+    shutil.copy(Path(Path.cwd(), asBuilt.name), Path(Path(__file__).parent, "OSP_model"))
+    # ... and to case_study (to be deleted, because the projects are not connected):
+    shutil.copy(
+        Path(Path.cwd(), asBuilt.name),
+        Path(Path(__file__).parent.parent.parent, "case_study", "tests", "data", "MobileCrane"),
+    )
 
-#@pytest.mark.skip("Run the FMU")
-def test_run_mobilecrane():
-    result = simulate_fmu(
-        "OSP_model/MobileCrane.fmu",
-        stop_time=1.0,
+
+# @pytest.mark.skip("Run the FMU")
+def test_run_mobilecrane(show):
+    cwd = Path(__file__).parent
+    result = simulate_fmu(  # static run
+        Path(cwd, "OSP_model", "MobileCrane.fmu"),
+        stop_time=0.1,
         step_size=0.1,
         validate=True,
         solver="Euler",
@@ -105,17 +72,49 @@ def test_run_mobilecrane():
         start_values={
             "pedestal_mass": 10000.0,
             "pedestal_boom[0]": 3.0,
-            "pedestal_boom[2]": radians(90),
+            "pedestal_boom[2]": 0.0,
             "boom_mass": 1000.0,
             "boom_boom[0]": 8,
-            "boom_boom[1]": radians(45),
-            "boom_angularVelocity[0]": 0.02,
+            "boom_boom[1]": 45.0,  # input as deg, internal: rad
+            "rope_boom[0]": 1e-6,
+        },
+    )
+    # result is a list of tuples. Each tuple contains (time, output-variables)
+    assert abs(result[0][19] - 8) < 1e-9, f"Default start value {result[0][19]}. Default start value of boom end!"
+    assert result[1][0] == 0.01, "fmpy does not seem to deal properly with the step_size argument!"
+    assert abs(result[1][19] - 8 / sqrt(2)) < 1e-14, f"Initial setting {result[1][19]} visible only after first step!"
+    M, c = mass_center(
+        ((10000, -1, 0, 1.5), (1000, 4 / sqrt(2), 0, 3 + 4 / sqrt(2)), (50, 8 / sqrt(2), 0, 3 + 8 / sqrt(2)))
+    )
+
+    result = simulate_fmu(
+        Path(cwd, "OSP_model", "MobileCrane.fmu"),
+        stop_time=0.1,
+        step_size=0.1,
+        solver="Euler",
+        debug_logging=True,
+        logger=print,  # fmi_call_logger=print,
+        start_values={
+            "pedestal_mass": 10000.0,
+            "pedestal_boom[0]": 3.0,
+            "pedestal_boom[2]": 0.0,
+            "boom_mass": 1000.0,
+            "boom_boom[0]": 8,
+            "boom_boom[1]": 45.0,  # input as deg, internal: rad
+            "pedestal_angularVelocity[1]": radians(1.0),  # azimuthal movement 1 deg per time step
             "rope_boom[0]": 1e-6,
             "fixation_angularVelocity[0]": 0.0,
             "fixation_angularVelocity[1]": 0.0,
         },
     )
-    plot_result(result)
+    assert (
+        abs(result[1][19] - 8 / sqrt(2) * cos(radians(1.0))) < 1e-9
+    ), f"Initial setting {result[1][19]} visible only after first step!"
+    assert abs(result[10][19] - 8 / sqrt(2) * cos(radians(10))) < 1e-9, f"Final position of boom {result[10][19]}"
+    assert abs(result[10][20] - 8 / sqrt(2) * sin(radians(10))) < 1e-9, f"Final position of boom {result[10][20]}"
+    assert abs(result[10][21] - 3 - 8 / sqrt(2)) < 1e-9, f"Final position of boom {result[10][21]}"
+    if show:
+        plot_result(result)
 
 
 # def test_dll():
@@ -127,5 +126,8 @@ def test_run_mobilecrane():
 
 
 if __name__ == "__main__":
-    retcode = pytest.main(["-rA", "-v", __file__])
+    retcode = pytest.main(["-rA", "-v", "--show", "False", __file__])
     assert retcode == 0, f"Return code {retcode}"
+    # test_mass_center()
+    # test_make_mobilecrane()
+    # test_run_mobilecrane(show=False)
