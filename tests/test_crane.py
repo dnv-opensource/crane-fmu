@@ -205,8 +205,10 @@ def test_getter_setter(crane):
             v._check = v._check & Check.units  # switch off range checking
             val_raw = getattr(v.owner, v.local_name, None)
             assert val_raw is not None, f"Raw value of {v.name} is not accessible"
+            val_get = v.getter()
             for k in range(len(v)):
-                val = v.getter()[k] if len(v) > 1 else v.getter()
+                val = val_get[k] if len(v) > 1 else val_get
+
                 if v.display[k] is None:
                     assert abs(val - (val_raw if len(v) == 1 else val_raw[k])) < 1e-9
                 else:  # display transformation needed

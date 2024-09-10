@@ -49,7 +49,7 @@ class Boom(object):
         description (str) = '':  An optional description of the boom
         anchor0 (Model,Boom): the model (crane) object to which this Boom belongs (if this is the first boom), or anchor of the boom where it is fixed to the crane.
         mass (float): Parameter denoting the (assumed fixed) mass of the boom
-        mass_center (float,tuple): Parameter denoting the (assumed fixed) position of the center of mass of the boom,
+        massCenter (float,tuple): Parameter denoting the (assumed fixed) position of the center of mass of the boom,
           provided as portion of the length (as float) and optionally the absolute displacements in x- and y-direction (assuming the boom in z-direction),
           e.g. (0.5,'-0.5 m','1m'): halfway down the boom displaced 0.5m in the -x direction and 1m in the y direction
         boom (tuple): A tuple defining the boom relative in spherical (ISO 80000) coordinates
@@ -85,13 +85,13 @@ class Boom(object):
                           The mass should include all additional items fixed to it, like the operator's cab",
                         anchor0      = crane,
                         mass         = '2000.0 kg',
-                        mass_center = (0.5, 0,'2 deg'),
+                        massCenter = (0.5, 0,'2 deg'),
                         boom        = ('5.0 m', 0, '0deg'),
                         boom_rng      = (None, (0,'360 deg'), None)
 
 
     .. todo:: determine the range of forces
-    .. limitation:: The mass and the mass_center setting of booms is assumed constant. With respect to rope and hook of a crane this means that basically only the mass of the hook is modelled.
+    .. limitation:: The mass and the massCenter setting of booms is assumed constant. With respect to rope and hook of a crane this means that basically only the mass of the hook is modelled.
     .. assumption:: Center of mass: _c_m is the local c_m measured relative to origin. _c_m_sub is a global quantity
     """
 
@@ -103,7 +103,7 @@ class Boom(object):
         anchor0: Boom | None = None,
         mass: str = "1 kg",
         mass_rng: tuple | None = None,
-        mass_center: float | tuple = 0.5,
+        massCenter: float | tuple = 0.5,
         boom: tuple = (1, 0, 0),
         boom_rng: tuple = tuple(),
         damping: float = 0.0,
@@ -127,7 +127,7 @@ class Boom(object):
             self.origin = self.anchor0.end
             self.anchor0.anchor1 = self
         self.mass = self._interface("mass", mass, mass_rng)
-        self.mass_center = list(mass_center) if isinstance(mass_center, tuple) else [mass_center, 0.0, 0.0]
+        self.massCenter = list(massCenter) if isinstance(massCenter, tuple) else [massCenter, 0.0, 0.0]
         self.boom = self._interface("boom", boom, boom_rng)
         self.base_angles = self.get_base_angles()
         self.direction = self.get_direction()
@@ -371,9 +371,7 @@ class Boom(object):
     @property
     def c_m(self):
         """Return the local center of mass point relative to self.origin."""
-        return self.mass_center[0] * self.length * self.direction + np.array(
-            (self.mass_center[1], self.mass_center[2], 0)
-        )
+        return self.massCenter[0] * self.length * self.direction + np.array((self.massCenter[1], self.massCenter[2], 0))
 
     @property
     def c_m_sub(self):
@@ -402,7 +400,7 @@ class Boom(object):
           while self.anchor1.end represents the new anchor position.
         """
         if self.damping > 0:  # flexible joint (rope)
-            com_len = self.length * self.mass_center[0]  # length between anchor and c.o.m (unchanged!)
+            com_len = self.length * self.massCenter[0]  # length between anchor and c.o.m (unchanged!)
             com0 = self.origin + com_len * self.direction  # the previous absolute c.o.m. point
             anchor_to_com = com0 - self.anchor0.end
             anchor_to_com_len = np.linalg.norm(anchor_to_com)
@@ -494,7 +492,7 @@ class Boom(object):
         -------
             updated velocity and acceleration (of c_m)
 
-        .. assumption:: the center of mass is on the boom line at _mass_center[0] relative distance from origin
+        .. assumption:: the center of mass is on the boom line at _massCenter[0] relative distance from origin
         .. math::
 
             \\ddot\vec r=-frac{\vec r \\cross (\vec r \\ cross \vec g)}{R^2} - frac{\\dot\vec r^2}{R^2} \vec r
@@ -514,7 +512,7 @@ class Boom(object):
         if self.damping != 0.0:
             assert self.anchor1 is None, "Pendulum movement is so far only implemented for the last boom (the rope)"
             # center of mass factor (we look on the c_m with respect to pendulum movements):
-            c = self.mass_center[0]
+            c = self.massCenter[0]
             R = c * self.length  # pendulum radius
             r = R * self.direction  # the current radius vector (of c_m) as copy
             dr_dt = self.velocity  # velocity at start of interval. This is correct if _c_m == _c_m_sub
@@ -557,7 +555,7 @@ class Boom(object):
         elif newLength == 0.0:
             return 0
         else:
-            return sqrt(9.81 / (newLength * self.mass_center[0])) / sqrt(4 * self.damping - 1)
+            return sqrt(9.81 / (newLength * self.massCenter[0])) / sqrt(4 * self.damping - 1)
 
     def change_length(self, dL: float):
         """Change the length of the boom (if allowed)
@@ -573,13 +571,13 @@ class Boom(object):
 
         Args:
             dM (float): The added or subtracted mass
-            relCOM (float)=None: Optional possibility to change the relative c_m point along the boom (between 1e-6 and 1.0), i.e. changing self.mass_center
+            relCOM (float)=None: Optional possibility to change the relative c_m point along the boom (between 1e-6 and 1.0), i.e. changing self.massCenter
 
         .. note:: We treat mass changes as non-dynamic effect (dt=None), since the change in c_m position should not be associated with a velocity or acceleration
         .. note:: Mass changes have no direct effect on attached boom (which do normally not exist, since the load is often attached to the last boom)
         """
         if center is not None:
-            self.mass_center[0] = center
+            self.massCenter[0] = center
         self.mass += dM
         self._c_m = self.c_m  # re-calculate the own COM
         # call from crane: self.calc_statistics_dynamics( dt=None, isInitiator=True) # re-calculate the static properties and inform parent booms of the change in c_m
