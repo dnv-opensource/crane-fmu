@@ -3,11 +3,8 @@ from math import cos, radians, sin, sqrt
 from pathlib import Path
 
 import numpy as np
-import pytest
-from component_model.model import Model
 from fmpy import dump, plot_result, simulate_fmu
 from fmpy.validation import validate_fmu
-from mobile_crane import MobileCrane
 
 np.set_printoptions(formatter={"float_kind": "{:.2f}".format})
 
@@ -27,7 +24,6 @@ def mass_center(xs: tuple):
         c += x[0] * np.array(x[1:], float)
     return (M, c / M)
 
-
 def test_mass_center():
     def do_test(Mc, _M, _c):
         assert Mc[0] == _M, f"Mass not as expected: {Mc[0]} != {_M}"
@@ -38,31 +34,16 @@ def test_mass_center():
 
 
 # @pytest.mark.skip("Do not make a new FMU just now")
-def test_make_mobilecrane(show):
-    _ = MobileCrane()
-    # for i in range( len( crane.vars)):
-    #     if crane.vars[i] is not None:
-    #         print( "MODEL_VARIABLE", i, crane.vars[i].name)
-    cwd = Path(__file__).parent
-    asBuilt = Model.build(Path(cwd, "mobile_crane.py"))
-    val = validate_fmu(asBuilt.name)
-    assert not len(val), f"Validation of the modelDescription of {asBuilt.name} was not successful. Errors: {val}"
+def test_make_mobilecrane(mobile_crane_fmu, show: bool):
+    val = validate_fmu(str(mobile_crane_fmu))
+    assert not len(val), f"Validation of the modelDescription of {mobile_crane_fmu.name} was not successful. Errors: {val}"
     if show:
-        dump(asBuilt.name)
-    # copy the created FMU also to the OSP_model folder:
-    shutil.copy(Path(Path.cwd(), asBuilt.name), Path(Path(__file__).parent, "OSP_model"))
-    # ... and to case_study (to be deleted, because the projects are not connected):
-    shutil.copy(
-        Path(Path.cwd(), asBuilt.name),
-        Path(Path(__file__).parent.parent.parent, "case_study", "tests", "data", "MobileCrane"),
-    )
-
+        dump(mobile_crane_fmu.name)
 
 # @pytest.mark.skip("Run the FMU")
-def test_run_mobilecrane(show):
-    cwd = Path(__file__).parent
+def test_run_mobilecrane(mobile_crane_fmu, show: bool):
     result = simulate_fmu(  # static run
-        Path(cwd, "OSP_model", "MobileCrane.fmu"),
+        str(mobile_crane_fmu),
         stop_time=0.1,
         step_size=0.1,
         validate=True,
@@ -88,7 +69,7 @@ def test_run_mobilecrane(show):
     )
 
     result = simulate_fmu(
-        Path(cwd, "OSP_model", "MobileCrane.fmu"),
+        str(mobile_crane_fmu),
         stop_time=0.1,
         step_size=0.1,
         solver="Euler",
@@ -115,19 +96,3 @@ def test_run_mobilecrane(show):
     assert abs(result[10][21] - 3 - 8 / sqrt(2)) < 1e-9, f"Final position of boom {result[10][21]}"
     if show:
         plot_result(result)
-
-
-# def test_dll():
-#     bb = WinDLL(os.path.abspath(os.path.curdir) + "\\BouncingBall.dll")
-#     bb.fmi2GetTypesPlatform.restype = c_char_p
-#     print(bb.fmi2GetTypesPlatform(None))
-#     bb.fmi2GetVersion.restype = c_char_p
-#     print(bb.fmi2GetVersion(None))
-
-
-if __name__ == "__main__":
-    retcode = pytest.main(["-rA", "-v", "--show", "False", __file__])
-    assert retcode == 0, f"Return code {retcode}"
-    # test_mass_center()
-    # test_make_mobilecrane()
-    # test_run_mobilecrane(show=False)

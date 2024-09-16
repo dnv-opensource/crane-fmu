@@ -430,7 +430,7 @@ def animate_sequence(crane, seq=(), nSteps=10):
         b._angularVelocity.setter(0.0)
 
 
-# @pytest.mark.skip("Animate crane movement")
+@pytest.mark.skip("Animate crane movement")
 def test_animation(crane, show):
     if not show:  # if nothing can be shown, we do not need to run it
         return
@@ -519,14 +519,3 @@ def show_crane(_crane, markCOM=True, markSubCOM=True, title: str | None = None):
     if title is not None:
         plt.title(title, loc="left")
     plt.show()
-
-
-if __name__ == "__main__":
-    retcode = pytest.main(["-rP -s -v", "--show", "False", __file__])
-    assert retcode == 0, f"Return code {retcode}"
-    # test_initial( crane() )
-    # test_pendulum( crane(), 1 )
-    # test_sequence( crane())#, 4 )
-    # test_change_length( crane(), True)
-    # test_boom_position( crane())
-    # test_animation(crane())

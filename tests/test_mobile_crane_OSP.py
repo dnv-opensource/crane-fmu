@@ -1,6 +1,9 @@
 import os
 from math import radians
 
+from pathlib import Path
+import xml.etree.ElementTree as ET  # noqa: N817
+
 from libcosimpy.CosimEnums import (
     CosimExecutionState,
     CosimVariableType,
@@ -9,6 +12,7 @@ from libcosimpy.CosimExecution import CosimExecution
 from libcosimpy.CosimManipulator import CosimManipulator
 from libcosimpy.CosimObserver import CosimObserver
 from libcosimpy.CosimSlave import CosimLocalSlave
+import pytest
 
 
 def var_by_name(simulator: CosimExecution, name: str, comp: str | int = 1) -> dict:
@@ -42,6 +46,19 @@ def var_by_name(simulator: CosimExecution, name: str, comp: str | int = 1) -> di
             }
     raise AssertionError(f"Variable {name} was not found within component {comp}") from None
 
+@pytest.fixture(scope="session")
+def mobile_crane_system_structure(mobile_crane_fmu):
+    ET.register_namespace("", "http://opensimulationplatform.com/MSMI/OSPSystemStructure")
+    tree = ET.parse(Path(__file__).parent / "resources" / "OspSystemStructure.xml")
+    root = tree.getroot()
+
+    root[0][0].attrib["source"] = f"../{os.path.basename(mobile_crane_fmu.parent)}/MobileCrane.fmu"
+
+    build_path = Path.cwd() / "config"
+    build_path.mkdir(exist_ok=True)
+    system_structure_path = build_path / "OspSystemStructure.xml"
+    tree.write(system_structure_path)
+    return system_structure_path
 
 # def test_visual_simulation_1():
 #     simulator = VisualSimulator()
@@ -86,17 +103,15 @@ def var_by_name(simulator: CosimExecution, name: str, comp: str | int = 1) -> di
 #     )
 
 
-def test_mobilecrane():
+def test_mobilecrane(mobile_crane_system_structure, mobile_crane_fmu):
     """Stand-alone test of MobileCrane.fmu using OSP"""
 
     def set_initial(name, value):
         var = var_by_name(simulator, name, iCrane)
         simulator.real_initial_value(slave_index=iCrane, variable_reference=var["reference"], value=value)
 
-    assert os.path.exists("OSP_model/MobileCrane.fmu"), "MobileCrane.fmu? Generate with test_mobile_crane_FMU.py"
-
-    simulator = CosimExecution.from_osp_config_file("OSP_model/OspSystemStructure.xml")
-    crane = CosimLocalSlave(fmu_path="OSP_model/MobileCrane.fmu", instance_name="mobileCrane")
+    simulator = CosimExecution.from_osp_config_file(str(mobile_crane_system_structure))
+    crane = CosimLocalSlave(fmu_path=str(mobile_crane_fmu), instance_name="mobileCrane")
     iCrane = simulator.add_local_slave(crane)
     sim_status = simulator.status()
     assert sim_status.current_time == 0
@@ -136,9 +151,3 @@ def test_mobilecrane():
     for i in range(len(t)):
         print(f"{t[i]/1e9}, {torque0[i]}, {torque1[i]}, {torque2[i]}")
     print("Simulation finalized")
-
-
-if __name__ == "__main__":
-    #    retcode = pytest.main(["-rA", "-v", __file__])
-    #    assert retcode == 0, f"Non-zero return code {retcode}"
-    test_mobilecrane()
