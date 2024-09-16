@@ -21,12 +21,11 @@ class BoomOperationError(Exception):
 
 class Boom(object):
     """Boom object, representing one element of a crane,
-    modelled as stiff line with length, mass and given degrees of freedom.
+    modelled as stiff rod with length, mass, mass-center and given degrees of freedom.
 
-    The boom has a
-
-    * position (3D position of hinge, which can be moved by parent)
-    * boom (3D vector along the boom from hinge to hinge)
+    Alternative to instantiating a Boom by calling its `__init__()` ,
+    the `add_boom()` method of the crane can be called.
+    In this case the `model` and `anchor0` parameters (see below) shall not be included (are automatically added).
 
     Basic boom movements are
 
@@ -45,61 +44,75 @@ class Boom(object):
     .. note:: initialization variables are designed for easy management of parameters, while derived internal variables are more complex (often 3D vectors)
 
     Args:
+        model (Model): The model object owning the boom.
         name (str): The short name of the boom (unique within FMU)
         description (str) = '':  An optional description of the boom
-        anchor0 (Model,Boom): the model (crane) object to which this Boom belongs (if this is the first boom), or anchor of the boom where it is fixed to the crane.
+        anchor0 (Boom): the boom object to which this Boom is attached.
+            There is exactly one boom where this is set to None, which is the crane `fixation`
+            and which is automatically provided by the crane, i.e. for real booms this is never None.
         mass (float): Parameter denoting the (assumed fixed) mass of the boom
+        mass_rng (tuple): Optional range of the mass, if the mass can be changed.
+            Normally only the last boom (the rope) has a variable mass (the load).
         massCenter (float,tuple): Parameter denoting the (assumed fixed) position of the center of mass of the boom,
-          provided as portion of the length (as float) and optionally the absolute displacements in x- and y-direction (assuming the boom in z-direction),
-          e.g. (0.5,'-0.5 m','1m'): halfway down the boom displaced 0.5m in the -x direction and 1m in the y direction
-        boom (tuple): A tuple defining the boom relative in spherical (ISO 80000) coordinates
+            provided as portion of the length (as float).
+            Optionally the absolute displacements in x- and y-direction (assuming the boom in z-direction) can be added
+            e.g. (0.5,'-0.5 m','1m'): halfway down the boom displaced 0.5m in the -x direction and 1m in the y direction
+        boom (tuple): A tuple defining the boom relative to its parent in spherical (ISO 80000) coordinates.
+            From the parent boom the following attributes are automatically inferred:
 
-           * origin: crane origin or end of connecting boom => cartesian origin
-           * pole axis: crane z-direction or direction vector of connecting boom => local cartesian z-axis
-           * reference direction in equator plane: crane x-direction or azimuth angle of connecting boom => local cartesian x-axis
+            * origin: end of the parent boom => cartesian origin
+            * pole axis: direction vector of the parent boom => local cartesian z-axis
+            * reference direction in equator plane: crane x-direction or azimuth angle of connecting boom => local cartesian x-axis
 
-           => coordinates:
+            The boom is then defined in local polar coordinates:
 
-           * length: the length of the boom (in length units)
-           * polar: a rotation angle for a rotation around the negative x-axis (away from z-axis) against the clock.
-           * azimuth: a rotation angle for a rotation around the positive z-axis against the clock.
+            * length: the length of the boom (in length units)
+            * polar: a rotation angle for a rotation around the negative x-axis (away from z-axis) against the clock.
+            * azimuth: a rotation angle for a rotation around the positive z-axis against the clock.
 
-          Note: The boom and its range is used to keep length and local coordinate system up-to-date,
-          while the active work variables are the cartesian origin and direction (cartesian boom vector)
-        boommRng (tuple): Range for each of the boom components, relative to the z-axis, i.e. how much the boom can be rotated/lengthened with respect to the z-axis.
-          As normal, range components specified as None denote fixed components. Most booms have only one (rotation) degree of freedom.
-        damping (float)=0.0: optional possibility to implement a loose connection between booms (damping>0),
-          e.g. the crane rope is implemented as a stiff boom of variable length with a loose connection hanging from the previous boom.
+           :: note..: The boom and its range is used to keep length and local coordinate system up-to-date,
+               while the active work variables are the cartesian origin, direction and length
+        boom_rng (tuple): Range for each of the boom components,
+            i.e. how much the boom length can be changed and how (much) it can be rotated
+            As normal, range components specified as None denote fixed components.
+            Most booms have only one (rotation) degree of freedom.
+        damping (float)=0.0: optional possibility to implement a loose connection between booms.
 
-          The damping denotes the dimensionless damping quality factor (energy stored/energy lost per radian),
-          which is also equal to 2*ln( amplitude/amplitude next period), or pi*frequency*decayTime
+            * if damping=0.0, the connection to the parent boom is stiff according to the boom angle setting
+            * if 0<damping<=0.5, the crane boom (the rope) is implemented as a stiff
+                with a loose connection hanging from the parent boom.
+
+            The damping denotes the dimensionless damping quality factor (energy stored/energy lost per radian),
+            which is also equal to `2*ln( amplitude/amplitude next period)`, or `pi*frequency*decayTime`
         animationLW (int)=5: Optional possibility to change the default line width when performing animations.
-          E.g. the pedestal might be drawn with larger and the rope with smaller line width
+            E.g. the pedestal might be drawn with larger and the rope with smaller line width
 
-    Instantiate like:
+    With a crane object `crane` , instantiate like:
 
     .. code-block:: python
 
-       pedestal = Boom( name         ='pedestal',
-                        description  = "The vertical crane base, on one side fixed to the vessel and on the other side the first crane boomm is fixed to it.
+       pedestal = crane.add_boom(
+           name ='pedestal',
+           description = "The vertical crane base, on one side fixed to the vessel and
+                          on the other side the pedestal is fixed to it (can rotate around z-axis).
                           The mass should include all additional items fixed to it, like the operator's cab",
-                        anchor0      = crane,
-                        mass         = '2000.0 kg',
-                        massCenter = (0.5, 0,'2 deg'),
-                        boom        = ('5.0 m', 0, '0deg'),
-                        boom_rng      = (None, (0,'360 deg'), None)
+           mass = '2000.0 kg',
+           massCenter = (0.5, 0,'2 deg'),
+           boom = ('5.0 m', 0, '0deg'),
+           boom_rng = (None, (0,'360 deg'), None)
+           )
 
 
     .. todo:: determine the range of forces
     .. limitation:: The mass and the massCenter setting of booms is assumed constant. With respect to rope and hook of a crane this means that basically only the mass of the hook is modelled.
-    .. assumption:: Center of mass: _c_m is the local c_m measured relative to origin. _c_m_sub is a global quantity
+    .. assumption:: Center of mass: `_c_m` is the local mass-center measured relative to origin. `_c_m_sub` is a global quantity
     """
 
     def __init__(
         self,
         model: Model,
         name: str,
-        description: str,
+        description: str = "",
         anchor0: Boom | None = None,
         mass: str = "1 kg",
         mass_rng: tuple | None = None,
@@ -137,7 +150,7 @@ class Boom(object):
         if self.damping != 0.0:
             if damping < 0.5:
                 raise BoomInitError(f"Damping quality {self.damping} of {self.name} should be 0 or >0.5.") from None
-            self._decayRate = self.calc_decayrate(self.length)
+            self._decayRate = self._calc_decayrate(self.length)
         # do a total re-calculation of _c_m_sub and torque (static) for this boom (trivial) and the reverse connected booms
         self.angularVelocity = self._interface(
             "angularVelocity", (0, 0)
@@ -146,14 +159,14 @@ class Boom(object):
         self.torque = self._interface("torque", ("0 N*m", "0 N*m", "0 N*m"))
         self.force = self._interface("force", ("0 N", "0 N", "0 N"))
 
-        self.calc_statics_dynamics(dT=None)
+        self.calc_statics_dynamics(dt=None)
         # print("BOOM " +self._name +" EndPoints: " +str(self.origin) +", " +str(self.end) +" dir, length, damping: " +str(self.direction) +", " +str(self.length) +", " +str(self.damping))
 
     def _interface(self, name: str, start: str | float | tuple, rng: tuple | None = None):
         """Define interface variables.
         The function is kept separate from the code above to not clutter it too much.
         Arguments are passed on from __init__, as these concern interface issues like range.
-        All variable values are registered with the model as self.name+'_'+name,
+        All variable values are registered with the boom as self.name+'_'+name,
         such that they are accessible within the boom as self.(variable-name)
         and within the model as self.(boom-name)_(variable-name).
         In addition, the variable object itself is registered as self._(variable-name).
@@ -254,7 +267,7 @@ class Boom(object):
             )
         return getattr(self._model, self._name + "_" + name)
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int | str):
         """Facilitate subscripting booms. 'idx' denotes the connected boom with respect to self.
         Negative indices count from the tail. str indices identify booms by name.
         """
@@ -265,21 +278,24 @@ class Boom(object):
                     return None
                 elif b.name == idx:
                     return b
-                b = b.anchor1
+                elif b.anchor1 is None:
+                    return None
+                else:
+                    b = b.anchor1
 
         elif idx >= 0:
             for _ in range(idx):
+                if b.anchor1 is None:
+                    raise IndexError("Erroneous index " + str(idx) + " with respect to boom " + self.name)                
                 b = b.anchor1
-                if b is None:
-                    raise IndexError("Erroneous index " + str(idx) + " with respect to boom " + self.name)
             return b
         else:
             while b.anchor1 is not None:  # spool to tail
                 b = b.anchor1
             for _ in range(abs(idx) - 1):  # go back from tail
-                b = b.anchor0
-                if b is None:
+                if b.anchor0 is None:
                     raise IndexError("Erroneous index " + str(idx) + " with respect to boom " + self.name)
+                b = b.anchor0
             return b
 
     #     @property
@@ -388,7 +404,7 @@ class Boom(object):
             return self.anchor0.boom[1:] + self.anchor0.get_base_angles()
 
     def get_direction(self):
-        """Get the new direction vector (cartesian) after a change in crane (base_angles, local angles, boom length).
+        """Get the new direction vector (cartesian normal) after a change in parent (base_angles, local angles, boom length).
 
         * fixed boom: Fixed connection. Angle conserved.
         * rope: center of mass of rope tries to stay in position, but length is unchanged.
@@ -424,7 +440,7 @@ class Boom(object):
                 self.anchor1.update_child()
 
     def translate(self, vec: tuple | np.ndarray, cnt: int = 0):
-        """Translate the whole crane. Can obviously only instantiated by the first boom."""
+        """Translate the whole crane. Can obviously only be initiated by the first boom."""
         if isinstance(vec, tuple):
             vec = np.array(vec, dtype="float64")
         if cnt > 0 or self.anchor0 is None:  # can only be initiated by base!
@@ -432,18 +448,18 @@ class Boom(object):
             if self.anchor1 is not None:
                 self.anchor1.translate(vec, cnt + 1)
 
-    def calc_statics_dynamics(self, dT: float | None = None):
+    def calc_statics_dynamics(self, dt: float | None = None):
         """After any movement the local c_m and the c_m of connected booms have changed.
         Thus, after the movement has been transmitted to connected booms, the _c_m_sub of all booms can be updated in reverse order.
-        The local _c_m_sub is updated by calling this function, assuming that forward connected booms are updated.
+        The local _c_m_sub is updated by calling this function, assuming that child booms are updated.
         While updating, also the velocity, the torque (with respect to origin) and the linear force are calculated.
         Since there might happen multiple movements within a time interval, the function must be called explicitly, i.e. from crane.
 
         Args:
-            dT (float)=None: for dynamic calculations, the time for the movement must be provided
+            dt (float)=None: for dynamic calculations, the time for the movement must be provided
               and is then used to calculate velocity, acceleration, torque and force
         """
-        if dT is not None:
+        if dt is not None:
             c_m_sub1 = np.array(self._c_m_sub[1], dtype="float64")  # make a copy
         if self.anchor1 is None:  # there are no attached booms
             # assuming that _c_m is updated. Note that _c_m_sub is a global vector
@@ -456,14 +472,14 @@ class Boom(object):
             # updated _c_m_sub as absolute position
             self._c_m_sub = [mS + m, (cs * m + mS * posS) / (mS + m)]
         self.torque = self._c_m_sub[0] * np.cross(self._c_m_sub[1], np.array((0, 0, -9.81)))  # static torque
-        if dT is not None:  # the time for the movement is provided (dynamic analysis)
+        if dt is not None:  # the time for the movement is provided (dynamic analysis)
             velocity0 = np.array(self.velocity)
             # check for pendulum movements and implement for this time interval if relevant
-            self.velocity, acceleration = self._pendulum(dT)
+            self.velocity, acceleration = self._pendulum(dt)
             if self.velocity is None:
                 # there was no pendulum movement and the velocity has thus not been calculated. Calculate from _c_m_sub
-                self.velocity = (self._c_m_sub[1] - c_m_sub1) / dT
-                acceleration = (self.velocity - velocity0) / dT
+                self.velocity = (self._c_m_sub[1] - c_m_sub1) / dt
+                acceleration = (self.velocity - velocity0) / dt
             assert (
                 np.linalg.norm(self.velocity) < 1e50
             ), f"The velocity {self.velocity} is far too high. Time intervals too large?"
@@ -475,7 +491,7 @@ class Boom(object):
         # setattr( self._model, self._torque.local_name, self.torque)
         # setattr( self._model, self._force.local_name, self.force)
         if self.anchor0 is not None:
-            self.anchor0.calc_statics_dynamics(dT)
+            self.anchor0.calc_statics_dynamics(dt)
 
     def _pendulum(self, dt: float):
         r"""For a non-stiff connection, if the _c_m is not exactly below origin, the _c_m acts as a damped pendulum.
@@ -549,7 +565,7 @@ class Boom(object):
             return (dr_dt, acc)
         return (None, None)  # signal to calc_statics_dynamics that velocity and acceleration are not yet calculated
 
-    def calc_decayrate(self, newLength):
+    def _calc_decayrate(self, newLength):
         if self.damping == 0.0:
             return None
         elif newLength == 0.0:

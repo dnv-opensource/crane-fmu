@@ -403,7 +403,7 @@ def test_c_m(crane, show):
     np_arrays_equal(b1.c_m, (0, 0, 5))
     np_arrays_equal(b2.c_m, (0, 0, 2.5))
     # update all subsystem center of mass points. Need to do that from last boom!
-    crane.calc_statics_dynamics(dT=None)
+    crane.calc_statics_dynamics(dt=None)
     if show:
         show_crane(crane, markCOM=True, markSubCOM=False, title="test_c_m(). All booms along a line in z-direction")
     np_arrays_equal(b2.c_m_sub[1], b2.origin + b2.c_m)
@@ -425,7 +425,7 @@ def animate_sequence(crane, seq=(), nSteps=10):
         for _ in range(nSteps):
             b.angular_velocity_step(None, None)
             # update all subsystem center of mass points. Need to do that from last boom!
-            crane.calc_statics_dynamics(dT=None)
+            crane.calc_statics_dynamics(dt=None)
             yield (crane)
         b._angularVelocity.setter(0.0)
 
@@ -481,7 +481,7 @@ def test_animation(crane, show):
 
 def show_crane(_crane, markCOM=True, markSubCOM=True, title: str | None = None):
     # update all subsystem center of mass points. Need to do that from last boom!
-    _crane.calc_statics_dynamics(dT=None)
+    _crane.calc_statics_dynamics(dt=None)
     fig = plt.figure(figsize=(9, 9), layout="constrained")
     ax = fig.add_subplot(projection="3d")  # Note: this loads Axes3D implicitly
     ax.set_xlim(-10, 10)
@@ -522,11 +522,11 @@ def show_crane(_crane, markCOM=True, markSubCOM=True, title: str | None = None):
 
 
 if __name__ == "__main__":
-    retcode = pytest.main(["-rP -s -v", "--show", "False", __file__])
+    retcode = pytest.main(["-rP -s -v", "--show", "True", __file__])  # show plots and animations
     assert retcode == 0, f"Return code {retcode}"
     # test_initial( crane() )
     # test_pendulum( crane(), 1 )
-    # test_sequence( crane())#, 4 )
+    # test_sequence( crane(), show=True)#, 4 )
     # test_change_length( crane(), True)
     # test_boom_position( crane())
     # test_animation(crane())
