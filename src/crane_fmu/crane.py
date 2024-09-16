@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
-from component_model.model import Model, ModelOperationError  # type: ignore
+from component_model.model import Model  # type: ignore
 from component_model.variable import Variable  # type: ignore
 from mpl_toolkits.mplot3d.axes3d import Axes3D  # type: ignore
 
@@ -9,9 +9,11 @@ from crane_fmu.boom import Boom
 
 
 class Crane(Model):
-    """A crane object built from stiff booms and suitable to generate an FMU through PythonFMU.
-    The crane should first be instantiated and then the booms added, i.e. the basic boom is registered,
-    and through that all booms can be accessed.
+    """A crane object built from stiff booms
+    and suitable to generate an FMU through `component_model` and `PythonFMU`.
+    The crane should first be instantiated and then the booms added, using `.add_boom()` .
+    The basic boom `fixation` is automatically added and accessible through `.boom0`
+    and can be used to access the other added booms through `booms(reverse=False)` .
 
     Args:
         name (str): the name of the crane instant
@@ -45,9 +47,6 @@ class Crane(Model):
             boom=(1e-10, "0" + u_angle, "0" + u_angle),
             boom_rng=(None, (0, "180" + u_angle), ("-180" + u_angle, "180" + u_angle)),
         )
-        self.animation = (
-            None,
-        )  # if animation object is defined, this will be set and cause re-drawing during simulation
         self.dLoad = 0.0
         self._interface(u_angle, u_time)  # definition of crane level interface variables
 
@@ -65,7 +64,7 @@ class Crane(Model):
             causality="input",
             variability="continuous",
             start="0.0 kg" + "/" + u_time,
-            on_step=lambda t, dT: self.boom0[-1].change_mass(self.dLoad * dT),
+            on_step=lambda t, dt: self.boom0[-1].change_mass(self.dLoad * dt),
         )
 
     @property
@@ -89,38 +88,40 @@ class Crane(Model):
             yield boom
             boom = boom.anchor0 if reverse else boom.anchor1
 
-    def boom_by_name(self, name: str) -> Boom:
+    def boom_by_name(self, name: str) -> Boom|None:
+        """Retrieve a boom object by name. None if not found."""
         for b in self.booms():
             if b.name == name:
                 return b
-        raise ModelOperationError("Unknown boom " + name)
+        return None
 
     def add_boom(self, *args, **kvargs):
+        """Add a boom to the crane.
+
+        This method represents the recommended way to contruct a crane and then add the booms.
+        The `model` and `anchor0` parameters are automatically added to the boom when it is instantiated.
+        `args` and `kwargs` thus include all `Boom` parameters, but the `model` and the `anchor0`
+        """
         if "anchor0" not in kvargs:
             last = next(self.booms(reverse=True))
             kvargs.update({"anchor0": last})
         return Boom(self, *args, **kvargs)
 
-    def calc_statics_dynamics(self, dT=None):
-        """Run the calc_statics_dynamics on all booms in reverse order, to get all Boom._c_m_sub and dynamics updated."""
+    def calc_statics_dynamics(self, dt=None):
+        """Run `calc_statics_dynamics()` on all booms in reverse order,
+        to get all Boom._c_m_sub and dynamics updated.
+        """
         try:
-            next(self.booms(reverse=True)).calc_statics_dynamics(dT)
+            next(self.booms(reverse=True)).calc_statics_dynamics(dt)
         except StopIteration:
             pass
 
-    def do_step(self, currentTime, stepSize):
-        """Do a simulation step of size 'stepSize at time 'currentTime.
-        The input variables with values not equal to their start are listed in self.changedVariables.
-
-        .. assumption:: rotation axis of internal booms is always known. For normal booms that is obvious.
-          For rope, the axis is caused by previous movement and is thus known as internal data.
-        """
-        status = super().do_step(currentTime, stepSize)  # generic model step activities
+    def do_step(self, time: float, dt: float):
+        """Do a simulation step of size `dt` at `time` ."""
+        status = super().do_step(time, dt)  # generic model step activities
         # after all changed input variables are taken into account, update the statics and dynamics of the system
-        self.calc_statics_dynamics(dT=stepSize)
+        self.calc_statics_dynamics(dt)
         # print(f"CRANE.do_step {currentTime}. calc_statics_dynamics: {status}")
-        if None not in self.animation:
-            self.animation.update(currentTime)
         # print("Torque: (" + str(round(currentTime, 2)) + ")", self.boom0.torque)
         # res = "".join( x.name+":"+str(x.end) for x in self.booms())
         # print(f"Time {currentTime}, {res}")
@@ -129,6 +130,7 @@ class Crane(Model):
 
 class Animation:
     """Animation of the crane via matplotlib.
+    Due to issues with multiple CPU processes, this can currently not be used in conjunction with OSP.
 
     Args:
         crane (Crane): a reference to the crane which shall be animated

@@ -403,7 +403,7 @@ def test_c_m(crane, show):
     np_arrays_equal(b1.c_m, (0, 0, 5))
     np_arrays_equal(b2.c_m, (0, 0, 2.5))
     # update all subsystem center of mass points. Need to do that from last boom!
-    crane.calc_statics_dynamics(dT=None)
+    crane.calc_statics_dynamics()
     if show:
         show_crane(crane, markCOM=True, markSubCOM=False, title="test_c_m(). All booms along a line in z-direction")
     np_arrays_equal(b2.c_m_sub[1], b2.origin + b2.c_m)
