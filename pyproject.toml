@@ -1,10 +1,10 @@
 [build-system]
-    requires = ["setuptools>=61.0"]
+    requires = ["setuptools>=61.0", "wheel"]
     build-backend = "setuptools.build_meta"
 
 [project]
     name = "Crane_FMU"
-    version = "0.1.0"
+    version = "0.1"
     description = "Basic crane simulation model including publication as FMU, for usage in the SEACo project"
     authors = [
         {name = "Siegfried Eisinger", email = "Siegfried.Eisinger@DNV.com"},
@@ -13,6 +13,7 @@
     requires-python = ">=3.10.10"
     keywords = ["simulation", "model", "FMI", "OSP", "crane", "tight coupling"]
     license = {text = "BSD-3-Clause"}
+    data = ["tests/*", "tests/resources/mobile_crane.py"]
     classifiers = [
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
@@ -22,6 +23,8 @@
         "component_model>=0.0.1",
         "pythonfmu>=0.6.2",
         "numpy>=1.24.2",
+        "FMPy>=0.3.20",
+        "matplotlib>=3.7.1"
     ]
     #dynamic = ["version"]
 
@@ -30,7 +33,8 @@
     modelTest = ["FMPy>=3.9", "matplotlib>=3.7.1"]
     rest = ["docutils>=0.3", "pack ==1.1, ==1.3"]
     editor = ["thonny>=4.0.2"]
-
+    dev = ["pytest>=8.2","ruff>=0.4.2","mypy>=1.8.0","Sphinx>=7.3","sphinx-argparse-cli>=1.15","myst-parser>=3.0",
+           "furo>=2024.4"]
 
 [tool.black]
     line-length = 120

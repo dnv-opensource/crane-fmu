@@ -1,9 +1,9 @@
 import os
-from math import radians
-
-from pathlib import Path
 import xml.etree.ElementTree as ET  # noqa: N817
+from math import radians
+from pathlib import Path
 
+import pytest
 from libcosimpy.CosimEnums import (
     CosimExecutionState,
     CosimVariableType,
@@ -12,7 +12,6 @@ from libcosimpy.CosimExecution import CosimExecution
 from libcosimpy.CosimManipulator import CosimManipulator
 from libcosimpy.CosimObserver import CosimObserver
 from libcosimpy.CosimSlave import CosimLocalSlave
-import pytest
 
 
 def var_by_name(simulator: CosimExecution, name: str, comp: str | int = 1) -> dict:
@@ -46,6 +45,7 @@ def var_by_name(simulator: CosimExecution, name: str, comp: str | int = 1) -> di
             }
     raise AssertionError(f"Variable {name} was not found within component {comp}") from None
 
+
 @pytest.fixture(scope="session")
 def mobile_crane_system_structure(mobile_crane_fmu):
     ET.register_namespace("", "http://opensimulationplatform.com/MSMI/OSPSystemStructure")
@@ -59,6 +59,7 @@ def mobile_crane_system_structure(mobile_crane_fmu):
     system_structure_path = build_path / "OspSystemStructure.xml"
     tree.write(system_structure_path)
     return system_structure_path
+
 
 # def test_visual_simulation_1():
 #     simulator = VisualSimulator()

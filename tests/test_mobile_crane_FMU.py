@@ -1,6 +1,4 @@
-import shutil
 from math import cos, radians, sin, sqrt
-from pathlib import Path
 
 import numpy as np
 from fmpy import dump, plot_result, simulate_fmu
@@ -24,6 +22,7 @@ def mass_center(xs: tuple):
         c += x[0] * np.array(x[1:], float)
     return (M, c / M)
 
+
 def test_mass_center():
     def do_test(Mc, _M, _c):
         assert Mc[0] == _M, f"Mass not as expected: {Mc[0]} != {_M}"
@@ -36,9 +35,12 @@ def test_mass_center():
 # @pytest.mark.skip("Do not make a new FMU just now")
 def test_make_mobilecrane(mobile_crane_fmu, show: bool):
     val = validate_fmu(str(mobile_crane_fmu))
-    assert not len(val), f"Validation of the modelDescription of {mobile_crane_fmu.name} was not successful. Errors: {val}"
+    assert not len(
+        val
+    ), f"Validation of the modelDescription of {mobile_crane_fmu.name} was not successful. Errors: {val}"
     if show:
         dump(mobile_crane_fmu.name)
+
 
 # @pytest.mark.skip("Run the FMU")
 def test_run_mobilecrane(mobile_crane_fmu, show: bool):

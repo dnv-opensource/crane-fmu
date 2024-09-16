@@ -16,15 +16,15 @@ import shutil
 import sys
 
 sys.path.insert(0, os.path.abspath("../_ext"))
-sys.path.insert(0, os.path.abspath("../../"))
-shutil.copyfile("../../README.md", "readme.md")
+sys.path.insert(0, os.path.abspath("../../src/crane_fmu"))
+shutil.copyfile("../../README.rst", "readme.rst")
 
 
 # -- Project information -----------------------------------------------------
 
 project = "Crane FMU"
-copyright = "2023, Siegfried Eisinger and Magnus Steinstø"
-author = "Siegfried Eisinger and Magnus Steinstø"
+copyright = "2024, DNV"
+author = "Siegfried Eisinger and Jorge Mendez"
 
 # The full version, including alpha/beta/rc tags
 release = "0.1"

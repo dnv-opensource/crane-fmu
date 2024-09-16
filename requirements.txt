@@ -1,2 +1,0 @@
-FMPy>=0.3.20
-matplotlib>=3.7.1
