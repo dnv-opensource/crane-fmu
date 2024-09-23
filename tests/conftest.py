@@ -38,7 +38,7 @@ def mobile_crane_fmu():
     build_path.mkdir(exist_ok=True)
     fmu_path = Model.build(
         str(Path(__file__).parent / "resources" / "mobile_crane.py"),
-        project_files=[],
+        project_files=[Path(__file__).parent.parent / "src" / "crane_fmu"],
         dest=build_path,
     )
 
