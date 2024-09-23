@@ -5,8 +5,9 @@ from pathlib import Path
 from shutil import rmtree
 
 import pytest
-from pytest import LogCaptureFixture
 from component_model.model import Model
+from pytest import LogCaptureFixture
+
 
 @pytest.fixture(scope="package", autouse=True)
 def chdir():
@@ -32,6 +33,7 @@ def default_setup_and_teardown(caplog: LogCaptureFixture):
     yield
     _remove_output_dirs_and_files()
 
+
 @pytest.fixture(scope="session")
 def mobile_crane_fmu():
     build_path = Path.cwd() / "fmus"
@@ -43,6 +45,7 @@ def mobile_crane_fmu():
     )
 
     return fmu_path
+
 
 def _remove_output_dirs_and_files():
     for folder in output_dirs:

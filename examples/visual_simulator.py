@@ -1,6 +1,6 @@
 from component_model.plotter import VisualSimulator
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     simulator = VisualSimulator()
     simulator.start(
         points_3d=[

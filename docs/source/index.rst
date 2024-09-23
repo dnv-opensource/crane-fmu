@@ -1,21 +1,14 @@
-.. my-package documentation master file, created by
-   sphinx-quickstart on Wed Jul  6 21:16:21 2022.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. crane_fmu documentation master file
 
-my-package: Example Python Package
-=========================================
+crane_fmu package: Python-scripted generic crane and translation to FMU
+=======================================================================
 
 .. toctree::
    :maxdepth: 4
    :caption: Contents:
 
-   README
-   CHANGELOG
-   LICENSE
-   api
-   cli
-
+   readme
+   modules
 
 Indices and tables
 ==================

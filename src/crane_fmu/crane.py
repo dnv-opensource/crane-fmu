@@ -88,7 +88,7 @@ class Crane(Model):
             yield boom
             boom = boom.anchor0 if reverse else boom.anchor1
 
-    def boom_by_name(self, name: str) -> Boom|None:
+    def boom_by_name(self, name: str) -> Boom | None:
         """Retrieve a boom object by name. None if not found."""
         for b in self.booms():
             if b.name == name:

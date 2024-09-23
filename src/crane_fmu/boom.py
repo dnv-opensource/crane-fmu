@@ -286,7 +286,7 @@ class Boom(object):
         elif idx >= 0:
             for _ in range(idx):
                 if b.anchor1 is None:
-                    raise IndexError("Erroneous index " + str(idx) + " with respect to boom " + self.name)                
+                    raise IndexError("Erroneous index " + str(idx) + " with respect to boom " + self.name)
                 b = b.anchor1
             return b
         else:
@@ -408,12 +408,12 @@ class Boom(object):
 
         * fixed boom: Fixed connection. Angle conserved.
         * rope: center of mass of rope tries to stay in position, but length is unchanged.
-          => if this would make the length longer, the new direction is anchor->com
-             if this would make the length shorter, the c.o.m falls vertically, keeping the length constant.
+            => if this would make the length longer, the new direction is anchor->com
+            if this would make the length shorter, the c.o.m falls vertically, keeping the length constant.
 
         Note: self.origin is updated after get_direction() is run,
-          such that self.origin represents the anchor position before the movement,
-          while self.anchor1.end represents the new anchor position.
+        such that self.origin represents the anchor position before the movement,
+        while self.anchor1.end represents the new anchor position.
         """
         if self.damping > 0:  # flexible joint (rope)
             com_len = self.length * self.massCenter[0]  # length between anchor and c.o.m (unchanged!)
