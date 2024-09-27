@@ -5,3 +5,4 @@ pint>=0.22
 fmpy>=0.3.21
 libcosimpy>=0.0.2
 component-model>=0.0.1
+matplotlib>=3.7.1
