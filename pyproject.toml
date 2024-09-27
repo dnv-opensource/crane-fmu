@@ -19,8 +19,8 @@
         "Operating System :: OS Independent",
     ]
     dependencies = [
-        "component_model@git+https://github.com/dnv-innersource/TDR_component_model",
-        "pythonfmu@git+https://github.com/dnv-innersource/PythonFMU",
+        "component-model>=0.0.1",
+        "pythonfmu>=0.6.5",
         "numpy>=1.24.2",
         "FMPy>=0.3.20",
         "matplotlib>=3.7.1"
