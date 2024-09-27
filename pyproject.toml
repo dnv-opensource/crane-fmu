@@ -12,7 +12,7 @@
     readme = "README.rst"
     requires-python = ">=3.10.10"
     keywords = ["simulation", "model", "FMI", "OSP", "crane", "tight coupling"]
-    license = {text = "BSD-3-Clause"}
+    license = {text = "MIT"}
     classifiers = [
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
