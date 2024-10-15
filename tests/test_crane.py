@@ -73,6 +73,9 @@ def pendulum_relax(rope: Boom, show: bool, steps: int = 1000, dt: float = 0.01):
 
 @pytest.fixture
 def crane(scope="module", autouse=True):
+    _crane()
+    
+def _crane():
     Model.instances = []
     crane = Crane("crane")
     _ = crane.add_boom(
@@ -425,7 +428,7 @@ def animate_sequence(crane, seq=(), nSteps=10):
         for _ in range(nSteps):
             b.angular_velocity_step(None, None)
             # update all subsystem center of mass points. Need to do that from last boom!
-            crane.calc_statics_dynamics(dT=None)
+            crane.calc_statics_dynamics(dt=None)
             yield (crane)
         b._angularVelocity.setter(0.0)
 
@@ -481,7 +484,7 @@ def test_animation(crane, show):
 
 def show_crane(_crane, markCOM=True, markSubCOM=True, title: str | None = None):
     # update all subsystem center of mass points. Need to do that from last boom!
-    _crane.calc_statics_dynamics(dT=None)
+    _crane.calc_statics_dynamics(dt=None)
     fig = plt.figure(figsize=(9, 9), layout="constrained")
     ax = fig.add_subplot(projection="3d")  # Note: this loads Axes3D implicitly
     ax.set_xlim(-10, 10)
@@ -519,3 +522,8 @@ def show_crane(_crane, markCOM=True, markSubCOM=True, title: str | None = None):
     if title is not None:
         plt.title(title, loc="left")
     plt.show()
+if __name__ == "__main__":
+   retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "True",  __file__])
+   assert retcode == 0, f"Non-zero return code {retcode}"
+    # c = _crane()
+    # test_sequence(c, True)
