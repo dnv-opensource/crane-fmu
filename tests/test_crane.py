@@ -73,7 +73,7 @@ def pendulum_relax(rope: Boom, show: bool, steps: int = 1000, dt: float = 0.01):
 
 @pytest.fixture
 def crane(scope="module", autouse=True):
-    _crane()
+    return _crane()
     
 def _crane():
     Model.instances = []
