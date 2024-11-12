@@ -434,7 +434,7 @@ def animate_sequence(crane, seq=(), nSteps=10):
         b._angularVelocity.setter(0.0)
 
 
-@pytest.mark.skip("Animate crane movement")
+#@pytest.mark.skip("Animate crane movement")
 def test_animation(crane, show):
     if not show:  # if nothing can be shown, we do not need to run it
         return
@@ -530,3 +530,6 @@ if __name__ == "__main__":
     assert retcode == 0, f"Non-zero return code {retcode}"
     # c = _crane()
     # test_sequence(c, True)
+    # test_animation(c, show=True)
+    # test_rotation(c, show=True)
+    # test_c_m(c, show=True)

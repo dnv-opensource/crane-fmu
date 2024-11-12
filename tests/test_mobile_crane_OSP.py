@@ -54,7 +54,7 @@ def mobile_crane_system_structure(mobile_crane_fmu):
 
     root[0][0].attrib["source"] = f"../{os.path.basename(mobile_crane_fmu.parent)}/MobileCrane.fmu"
 
-    build_path = Path.cwd() / "config"
+    build_path = Path(__file__).parent / "resources"
     build_path.mkdir(exist_ok=True)
     system_structure_path = build_path / "OspSystemStructure.xml"
     tree.write(system_structure_path)
