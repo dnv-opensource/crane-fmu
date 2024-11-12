@@ -153,7 +153,7 @@ def test_mobilecrane(mobile_crane_system_structure, mobile_crane_fmu):
         print(f"{t[i]/1e9}, {torque0[i]}, {torque1[i]}, {torque2[i]}")
     print("Simulation finalized")
 
-if __name__ == "__main__":
-   retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "True",  __file__])
-   assert retcode == 0, f"Non-zero return code {retcode}"
 
+if __name__ == "__main__":
+    retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "True", __file__])
+    assert retcode == 0, f"Non-zero return code {retcode}"

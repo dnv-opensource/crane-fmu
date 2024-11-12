@@ -36,7 +36,7 @@ def default_setup_and_teardown(caplog: LogCaptureFixture):
 
 @pytest.fixture(scope="session")
 def mobile_crane_fmu():
-    build_path = Path.cwd() / "fmus"
+    build_path = Path(__file__).parent / "resources"  # together with other crane files
     build_path.mkdir(exist_ok=True)
     fmu_path = Model.build(
         str(Path(__file__).parent / "resources" / "mobile_crane.py"),

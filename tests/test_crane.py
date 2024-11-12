@@ -74,7 +74,8 @@ def pendulum_relax(rope: Boom, show: bool, steps: int = 1000, dt: float = 0.01):
 @pytest.fixture
 def crane(scope="module", autouse=True):
     return _crane()
-    
+
+
 def _crane():
     Model.instances = []
     crane = Crane("crane")
@@ -522,8 +523,10 @@ def show_crane(_crane, markCOM=True, markSubCOM=True, title: str | None = None):
     if title is not None:
         plt.title(title, loc="left")
     plt.show()
+
+
 if __name__ == "__main__":
-   retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "True",  __file__])
-   assert retcode == 0, f"Non-zero return code {retcode}"
+    retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "True", __file__])
+    assert retcode == 0, f"Non-zero return code {retcode}"
     # c = _crane()
     # test_sequence(c, True)
