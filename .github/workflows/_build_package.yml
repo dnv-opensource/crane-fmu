@@ -11,7 +11,7 @@ jobs:
         with:
           fetch-depth: 1
           lfs: true
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip' # cache pip dependencies
@@ -21,6 +21,6 @@ jobs:
         run: python -m build
       - name: Run twine check
         run: twine check --strict dist/*
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           path: ./dist/*.tar.gz
