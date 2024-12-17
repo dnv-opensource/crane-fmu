@@ -5,14 +5,14 @@ The package can be used to define concrete cranes and simulate their usage, see 
 
 Getting Started
 ---------------
-A concrete crane model should consist of an extension of the Crane object, 
+A concrete crane model should consist of an extension of the Crane object,
 
 * defining general model variables like `name`, `author`, `version`, etc.
 * defining the anticipated set of booms
 * if there is a wish to keep parameters configurable, these can be kept as parameters of the extended model.
 * In a separate script, instantiate the concrete crane, test it and run `Model.build(...)` to make the FMU.
 
-See the file `tests/resources/mobile_crane.py` and related test files 
+See the file `tests/resources/mobile_crane.py` and related test files
 as an example on how a concrete crane can be defined and used.
 
 
@@ -24,9 +24,9 @@ Installation
 
 Usage example
 -------------
-This is a simple mobile crane, like they are used on e.g. building sites with 
+This is a simple mobile crane, like they are used on e.g. building sites with
 
-* a short pedestal, which can be turn around, 
+* a short pedestal, which can be turn around,
 * one boom with variable length and which can be lifted
 * one rope, where loads can be attached.
 
@@ -210,7 +210,7 @@ Distributed under the MIT license. See `LICENSE <LICENSE.md/>`_ for more informa
 
 Contribute
 ----------
-Anybody in the FMU, OSPand SEACo community is especially welcome to contribute to this code, to make it better, 
+Anybody in the FMU, OSPand SEACo community is especially welcome to contribute to this code, to make it better,
 and especially including other features from model assurance and from SEACo issues.
 
 To contribute, follow these steps:
