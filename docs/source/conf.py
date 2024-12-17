@@ -15,6 +15,7 @@
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path("../_ext").absolute()))
 sys.path.insert(0, str(Path("../../src").absolute()))
 
 
@@ -46,7 +47,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.graphviz",
     "sphinx.ext.inheritance_diagram",
-    "sphinx.ext.autosectionlabel",
+    # "sphinx.ext.autosectionlabel",
 ]
 
 # Extenstion for myst_parser
@@ -83,7 +84,7 @@ autodoc_default_options = {
     "exclude-members": "__weakref__",
 }
 autodoc_preserve_defaults = True
-autoclass_content = "both"  # both __init__ and class docstring
+# autoclass_content = "both"  # both __init__ and class docstring
 
 myst_heading_anchors = 3
 
