@@ -25,7 +25,7 @@ class GetFromCode(SphinxDirective):
         obj = importlib.import_module(sPkg + "." + sMod)
         while len(sObj):
             sSub, _, sObj = sObj.partition(".")
-            obj = getattr(obj, sSub, "not found")
+            obj = getattr(obj, sSub, "not found")  # type: ignore[arg-type]
         print(
             "INFO [" + self.arguments[0] + "] Type:",
             type(obj),
@@ -43,6 +43,7 @@ class GetFromCode(SphinxDirective):
         elif isinstance(obj, (complex, float, int, str, list, dict, tuple)):  # no docstring
             text = str(obj).strip()
         else:  # if type(obj).__name__ in ('module','type','function') or isinstance( obj, type): # objects where docstring should be returned
+            assert obj.__doc__ is not None, "No docstring found for " + self.arguments[0]
             text = obj.__doc__.strip()
 
         self.content = nodes.paragraph(text=text)

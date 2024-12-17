@@ -4,10 +4,11 @@ Note2 that plt.figure.canvas.mpl_connect( event, callback) enables more interact
 """
 
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 fig = plt.figure(figsize=(14, 9))
 # line = Line3D( [1,2], [3,4], [5,6])
-ax = plt.axes(projection="3d")  # , data=line)
+ax: Axes3D = plt.axes(projection="3d")  # , data=line)
 dat = ax.plot([1, 2], [3, 4], [5, 6], linewidth=5)
 # print( dat, dat[0].get_data_3d()) # dat is a collection of 3d lines!
 
