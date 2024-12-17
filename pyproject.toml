@@ -24,8 +24,8 @@ packages = [
 ]
 
 [project]
-name = "Crane_FMU"
-version = "0.1.0"
+name = "Crane-FMU"
+version = "0.1.1"
 description = "Basic crane simulation model including publication as FMU, for usage in the SEACo project"
 readme = "README.rst"
 requires-python = ">= 3.10"

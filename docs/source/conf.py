@@ -22,12 +22,12 @@ sys.path.insert(0, str(Path("../../src").absolute()))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "crane-fmu"
+project = "Crane-FMU"
 copyright = "2024, DNV AS. All rights reserved."
 author = "Siegfried Eisinger, Jorge Mendez, SEACo project team"
 
 # The full version, including alpha/beta/rc tags
-release = "0.1.0"
+release = "0.1.1"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
