@@ -5,10 +5,11 @@ import numpy as np
 import pytest
 from component_model.model import Model
 from component_model.variable import Check
+from matplotlib.animation import FuncAnimation
+
 from crane_fmu.boom import Boom
 from crane_fmu.crane import Crane
 from crane_fmu.logger import get_module_logger
-from matplotlib.animation import FuncAnimation
 
 # from mpl_toolkits.mplot3d.art3d import Line3D
 

@@ -5,7 +5,6 @@ from shutil import rmtree
 
 import pytest
 from component_model.model import Model
-from pytest import LogCaptureFixture
 
 
 @pytest.fixture(scope="package", autouse=True)
