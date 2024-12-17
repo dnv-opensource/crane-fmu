@@ -1,116 +1,178 @@
 [build-system]
-    requires = ["setuptools>=61.0", "wheel"]
-    build-backend = "setuptools.build_meta"
+requires = [
+    "hatchling",
+]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+only-include = [
+    "src/crane_fmu",
+    "tests",
+    ".coveragerc",
+    ".editorconfig",
+    ".pre-commit-config.yaml",
+    "manage.py",
+    "pyproject.toml",
+    "pytest.ini",
+    "ruff.toml",
+    "uv.lock",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = [
+    "src/crane_fmu",
+]
 
 [project]
-    name = "Crane_FMU"
-    version = "0.1"
-    description = "Basic crane simulation model including publication as FMU, for usage in the SEACo project"
-    authors = [
-        {name = "Siegfried Eisinger", email = "Siegfried.Eisinger@DNV.com"},
-    ]
-    readme = "README.rst"
-    requires-python = ">=3.10.10"
-    keywords = ["simulation", "model", "FMI", "OSP", "crane", "tight coupling"]
-    license = {text = "MIT"}
-    classifiers = [
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-    ]
-    dependencies = [
-        "component-model>=0.0.1",
-        "pythonfmu>=0.6.5",
-        "numpy>=1.24.2",
-        "FMPy>=0.3.20",
-        "matplotlib>=3.7.1"
-    ]
-    #dynamic = ["version"]
-
+name = "Crane_FMU"
+version = "0.1.0"
+description = "Basic crane simulation model including publication as FMU, for usage in the SEACo project"
+readme = "README.rst"
+requires-python = ">= 3.10"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Siegfried Eisinger", email = "Siegfried.Eisinger@DNV.com" },
+]
+keywords = [
+    "simulation",
+    "model",
+    "FMI",
+    "OSP",
+    "crane",
+    "tight coupling",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    # "Operating System :: MacOS",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "component-model>=0.1.0",
+    "pythonfmu>=0.6.5",
+    "numpy>=1.26,<2.0",
+    "FMPy>=0.3.22",
+    "matplotlib>=3.10",
+]
 
 [project.optional-dependencies]
-    rest = ["docutils>=0.3"]
-    editor = ["thonny>=4.0.2"]
-    dev = ["pytest>=8.2","ruff>=0.4.2","mypy>=1.8.0","Sphinx>=7.3","sphinx-argparse-cli>=1.15","myst-parser>=3.0",
-           "furo>=2024.4"]
+rest = [
+    "docutils>=0.3",
+]
+editor = [
+    "thonny>=4.0.2",
+]
 
-[tool.black]
-    line-length = 120
-    target-version = ["py310"]
+[project.urls]
+Homepage = "https://github.com/dnv-opensource/crane-fmu"
+Documentation = "https://dnv-innersource.github.io/crane-fmu/README.html"
+Repository = "https://github.com/dnv-opensource/crane-fmu.git"
+Issues = "https://github.com/dnv-opensource/crane-fmu/issues"
+Changelog = "https://github.com/dnv-opensource/crane-fmu/blob/main/CHANGELOG.md"
 
-[tool.ruff]
-    exclude = [
-        ".git",
-        ".venv",
-        ".tox",
-        "build",
-        "dist",
-        "__pycache__",
-        "./doc/source/conf.py",
-    ]
-    src = ["case_study"]
-    lint.ignore = [
-        "E501",  # Line length too long
-        "D100",  # Missing docstring in public module
-        "D101",  # Missing docstring in public class
-        "D102",  # Missing docstring in public method
-        "D103",  # Missing docstring in public function
-        "D104",  # Missing docstring in public package
-        "D105",  # Missing docstring in magic method
-        "D107",  # Missing docstring in __init__
-        "D202",  # No blank lines allowed after function docstring
-        "D203",  # 1 blank line required before class docstring
-        "D205",  # 1 blank line required between summary line and description
-        "D212",  # Multi-line docstring summary should start at the first line
-        "D213",  # Multi-line docstring summary should start at the second line
-        # "N802",  # Function name should be lowercase  (uncomment if you want to allow Uppercase function names)
-        "N803",  # Argument name should be lowercase  (uncommented. Lower-camelCase is accepted for variables related to XML and FMI standard)
-        "N806",  # Variable in function should be lowercase  (uncomment if you want to allow Uppercase variable names in functions)
-        # "N815",  # Variable in class scope should not be mixedCase  (uncomment if you want to allow mixedCase variable names in class scope)
-        # "N816",  # Variable in global scope should not be mixedCase  (uncomment if you want to allow mixedCase variable names in global scope)
-        ]
 
-    line-length = 120
-    lint.select = [
-        "E",
-        "D",
-        "F",
-        "N",
-        "W",
-        "I",
-        "B",
-    ]
-    target-version = "py310"
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "ruff>=0.8.3",
+    "pyright>=1.1.390",
+    "mypy>=1.13",
+    "sourcery>=1.27",
+    "pre-commit>=4.0",
+    "Sphinx>=8.1",
+    "sphinx-argparse-cli>=1.19",
+    "sphinx-autodoc-typehints>=2.5",
+    "sphinxcontrib-mermaid>=1.0.0",
+    "myst-parser>=4.0",
+    "furo>=2024.8",
+    "jupyter>=1.1",
+    "pandas-stubs>=2.2",
+]
 
-    [tool.ruff.lint.pep8-naming]
-    ignore-names = [
-        "test_*",
-        "setUp",
-        "tearDown",
-    ]
+[tool.uv]
+default-groups = [
+    "dev",
+]
+native-tls = true
 
-    [tool.ruff.lint.pydocstyle]
-    convention = "numpy"
 
-    [tool.ruff.lint.per-file-ignores]
-    "__init__.py" = ["I001"]
-    "./tests/*" = ["D"]
+[project.scripts]
+crane-fmu = "crane_fmu.cli.crane_fmu:main"
+
 
 [tool.mypy]
-    exclude = [
-        ".git",
-        ".venv",
-        ".tox",
-        "build",
-        "dist",
-        "**/__pycache__",
-        "./doc/source/conf.py",
-        "tests",
-    ]
+plugins = [
+    "numpy.typing.mypy_plugin",
+]
+mypy_path = "stubs"
+files = [
+    "src",
+    # "tests",
+    "demos",
+]
+exclude = [
+    "^src/folder_to_be_excluded/",
+]
+check_untyped_defs = true
+disable_error_code = [
+    "misc",
+    "import-untyped",
+]
 
-[tool.pytest.ini_options]
-    testpaths = [
-        "tests",
-    ]
-    addopts = "--strict-markers"
-    xfail_strict = "True"
+
+[tool.pyright]
+stubPath = "stubs"
+include = [
+    "src",
+    "tests",
+    "demos",
+]
+exclude = [
+    "src/folder_to_be_excluded",
+]
+
+typeCheckingMode = "basic"
+useLibraryCodeForTypes = true
+reportMissingParameterType = "error"
+reportUnknownParameterType = "warning"
+reportUnknownMemberType = "warning"                # consider to set to `false` if you work a lot with matplotlib and pandas, which are both not properly typed and known to trigger this warning
+reportMissingTypeArgument = "error"
+reportPropertyTypeMismatch = "error"
+reportFunctionMemberAccess = "warning"
+reportPrivateUsage = "warning"
+reportTypeCommentUsage = "warning"
+reportIncompatibleMethodOverride = "warning"
+reportIncompatibleVariableOverride = "error"
+reportInconsistentConstructor = "error"
+reportOverlappingOverload = "warning"
+reportUninitializedInstanceVariable = "warning"
+reportCallInDefaultInitializer = "warning"
+reportUnnecessaryIsInstance = "information"
+reportUnnecessaryCast = "warning"
+reportUnnecessaryComparison = "warning"
+reportUnnecessaryContains = "warning"
+reportUnusedCallResult = "warning"
+reportUnusedExpression = "warning"
+reportMatchNotExhaustive = "warning"
+reportShadowedImports = "warning"
+reportUntypedFunctionDecorator = "warning"
+reportUntypedClassDecorator = "warning"
+reportUntypedBaseClass = "error"
+reportUntypedNamedTuple = "warning"
+reportUnnecessaryTypeIgnoreComment = "information"
+# Activate the following rules only locally and temporary, i.e. for a QA session.
+# (For server side CI they are considered too strict.)
+# reportMissingTypeStubs = true
+# reportConstantRedefinition = "warning"
+# reportImportCycles = "warning"
+# reportImplicitStringConcatenation = "warning"
