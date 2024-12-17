@@ -118,7 +118,7 @@ mypy_path = "stubs"
 files = [
     "src",
     # "tests",
-    "demos",
+    "examples",
 ]
 exclude = [
     "^src/folder_to_be_excluded/",
@@ -128,51 +128,3 @@ disable_error_code = [
     "misc",
     "import-untyped",
 ]
-
-
-[tool.pyright]
-stubPath = "stubs"
-include = [
-    "src",
-    "tests",
-    "demos",
-]
-exclude = [
-    "src/folder_to_be_excluded",
-]
-
-typeCheckingMode = "basic"
-useLibraryCodeForTypes = true
-reportMissingParameterType = "error"
-reportUnknownParameterType = "warning"
-reportUnknownMemberType = "warning"                # consider to set to `false` if you work a lot with matplotlib and pandas, which are both not properly typed and known to trigger this warning
-reportMissingTypeArgument = "error"
-reportPropertyTypeMismatch = "error"
-reportFunctionMemberAccess = "warning"
-reportPrivateUsage = "warning"
-reportTypeCommentUsage = "warning"
-reportIncompatibleMethodOverride = "warning"
-reportIncompatibleVariableOverride = "error"
-reportInconsistentConstructor = "error"
-reportOverlappingOverload = "warning"
-reportUninitializedInstanceVariable = "warning"
-reportCallInDefaultInitializer = "warning"
-reportUnnecessaryIsInstance = "information"
-reportUnnecessaryCast = "warning"
-reportUnnecessaryComparison = "warning"
-reportUnnecessaryContains = "warning"
-reportUnusedCallResult = "warning"
-reportUnusedExpression = "warning"
-reportMatchNotExhaustive = "warning"
-reportShadowedImports = "warning"
-reportUntypedFunctionDecorator = "warning"
-reportUntypedClassDecorator = "warning"
-reportUntypedBaseClass = "error"
-reportUntypedNamedTuple = "warning"
-reportUnnecessaryTypeIgnoreComment = "information"
-# Activate the following rules only locally and temporary, i.e. for a QA session.
-# (For server side CI they are considered too strict.)
-# reportMissingTypeStubs = true
-# reportConstantRedefinition = "warning"
-# reportImportCycles = "warning"
-# reportImplicitStringConcatenation = "warning"
