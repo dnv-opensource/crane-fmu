@@ -158,8 +158,8 @@ raises-require-match-for = [
     "PGH003", # Use specific rule codes when ignoring type issues
     "TCH002", # Move third-party import into a type-checking block
 ]
-# `demos` specific ignores
-"demos/**/*" = [
+# `examples` specific ignores
+"examples/**/*" = [
     "D",       # Missing docstrings
     "S101",    # Use of assert detected
     "PLR2004", # Magic value used in comparison

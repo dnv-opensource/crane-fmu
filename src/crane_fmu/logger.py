@@ -35,7 +35,7 @@ class MsgCounterHandler(logging.StreamHandler):
     def __init__(self, logger, *args, **kwargs):
         self.logger = logger
         try:
-            self._out = sys.stdout.shell
+            self._out = sys.stdout.shell  # type: ignore[union-attr]
         except AttributeError:
             try:
                 self._out = sys.stdout
