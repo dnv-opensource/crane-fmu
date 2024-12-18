@@ -1,14 +1,16 @@
-from math import pi, radians, sqrt
+from math import radians, sqrt
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 from component_model.model import Model
 from component_model.variable import Check
+from matplotlib.animation import FuncAnimation
+from mpl_toolkits.mplot3d import Axes3D
+
 from crane_fmu.boom import Boom
 from crane_fmu.crane import Crane
 from crane_fmu.logger import get_module_logger
-from matplotlib.animation import FuncAnimation
 
 # from mpl_toolkits.mplot3d.art3d import Line3D
 
@@ -52,7 +54,7 @@ def aligned(p_i):
     """Check whether all points pi are on the same straight line."""
     assert (
         len(p_i) > 2
-    ), f"Checking whether points are on the same line should include at least 3 points. Got only {len(pi)}"
+    ), f"Checking whether points are on the same line should include at least 3 points. Got only {len(p_i)}"
     directions = [p_i[i] - p_i[0] for i in range(1, len(p_i))]
     n_dir0 = directions[0] / np.linalg.norm(directions[0])
     for i in range(1, len(directions)):
@@ -73,6 +75,10 @@ def pendulum_relax(rope: Boom, show: bool, steps: int = 1000, dt: float = 0.01):
 
 @pytest.fixture
 def crane(scope="module", autouse=True):
+    return _crane()
+
+
+def _crane():
     Model.instances = []
     crane = Crane("crane")
     _ = crane.add_boom(
@@ -167,7 +173,7 @@ def test_initial(crane):
     np_arrays_equal(rope.end, (5, 0, 2.5))
 
     # Check center of mass calculation
-    M, c = mass_center([(b.mass, b.origin + b.c_m) for b in crane.booms(reverse=True)])
+    M, c = mass_center(tuple((b.mass, b.origin + b.c_m) for b in crane.booms(reverse=True)))
     crane.calc_statics_dynamics()
     _M, _c = pedestal.c_m_sub
     assert abs(_M - M) < 1e-9, f"Masses {_M} != {M}"
@@ -178,7 +184,7 @@ def test_initial(crane):
     boom1.boom_setter((None, radians(90), None))
     boom2.boom_setter((None, radians(0), None))
     rope.mass = 1e-100
-    M, c = mass_center([(b.mass, b.origin + b.c_m) for b in crane.booms(reverse=True)])
+    M, c = mass_center(tuple((b.mass, b.origin + b.c_m) for b in crane.booms(reverse=True)))
     crane.calc_statics_dynamics()
     _M, _c = fixation.c_m_sub
     assert abs(_M - M) < 1e-9, f"Masses {_M} != {M}"
@@ -190,7 +196,7 @@ def test_initial(crane):
     boom1.boom_setter((None, 0, None))
     boom2.boom_setter((None, 0, None))
     rope.mass = 1e-100
-    M, c = mass_center([(b.mass, b.origin + b.c_m) for b in crane.booms(reverse=True)])
+    M, c = mass_center(tuple((b.mass, b.origin + b.c_m) for b in crane.booms(reverse=True)))
     crane.calc_statics_dynamics()
     _M, _c = pedestal.c_m_sub
     assert abs(_M - 2300) < 1e-9, f"Masses {_M} != {M}"
@@ -238,11 +244,11 @@ def test_pendulum(crane, show):
     r.boom_setter((1, None, None))
     np_arrays_equal(r.origin, (5, 0, 3))
     np_arrays_equal(r.end, (5, 0, 2))
-    z_pos = [2]
-    speed = [0]
-    time = [0]
+    z_pos: list[float] = [2]
+    speed: list[float] = [0]
+    time: list[float] = [0]
     # => pendulum with origin at [5,0,3] with length 1m (down)
-    angle = 0
+    angle: float = 0.0
     crane.currentTime = 0
     dt = 0.01
     while crane.currentTime < 1:
@@ -254,7 +260,7 @@ def test_pendulum(crane, show):
         crane.calc_statics_dynamics(dt)
         # print(f"Angle {degrees(angle)}, rope origin: {r.origin}. rope velocity: {r.velocity}")
         z_pos.append(r.end[2])
-        speed_end = np.linalg.norm(r.velocity)
+        speed_end = float(np.linalg.norm(r.velocity))
         if speed_end > 1e10:
             break
         speed.append(speed_end)
@@ -425,12 +431,12 @@ def animate_sequence(crane, seq=(), nSteps=10):
         for _ in range(nSteps):
             b.angular_velocity_step(None, None)
             # update all subsystem center of mass points. Need to do that from last boom!
-            crane.calc_statics_dynamics(dT=None)
+            crane.calc_statics_dynamics(dt=None)
             yield (crane)
         b._angularVelocity.setter(0.0)
 
 
-@pytest.mark.skip("Animate crane movement")
+# @pytest.mark.skip("Animate crane movement")
 def test_animation(crane, show):
     if not show:  # if nothing can be shown, we do not need to run it
         return
@@ -462,7 +468,7 @@ def test_animation(crane, show):
 
     f, p, b1, b2, r = list(crane.booms())
     fig = plt.figure(figsize=(9, 9), layout="constrained")
-    ax = plt.axes(projection="3d")  # , data=line)
+    ax: Axes3D = plt.axes(projection="3d")  # , data=line)
     lines = []
 
     _ = FuncAnimation(
@@ -481,9 +487,9 @@ def test_animation(crane, show):
 
 def show_crane(_crane, markCOM=True, markSubCOM=True, title: str | None = None):
     # update all subsystem center of mass points. Need to do that from last boom!
-    _crane.calc_statics_dynamics(dT=None)
+    _crane.calc_statics_dynamics(dt=None)
     fig = plt.figure(figsize=(9, 9), layout="constrained")
-    ax = fig.add_subplot(projection="3d")  # Note: this loads Axes3D implicitly
+    ax: Axes3D = fig.add_subplot(projection="3d")  # Note: this loads Axes3D implicitly
     ax.set_xlim(-10, 10)
     ax.set_ylim(-10, 10)
     ax.set_zlim(0, 10)
@@ -519,3 +525,13 @@ def show_crane(_crane, markCOM=True, markSubCOM=True, title: str | None = None):
     if title is not None:
         plt.title(title, loc="left")
     plt.show()
+
+
+if __name__ == "__main__":
+    retcode = pytest.main(["-rA", "-v", "--rootdir", "../", "--show", "True", __file__])
+    assert retcode == 0, f"Non-zero return code {retcode}"
+    # c = _crane()
+    # test_sequence(c, True)
+    # test_animation(c, show=True)
+    # test_rotation(c, show=True)
+    # test_c_m(c, show=True)

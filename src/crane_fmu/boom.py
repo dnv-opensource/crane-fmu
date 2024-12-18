@@ -216,7 +216,7 @@ class Boom(object):
                 variability="continuous",
                 start=start,
             )
-            self._end.getter = lambda: self.end
+            self._end.getter = lambda: self.end  # type: ignore[method-assign]
         elif name == "angularVelocity":
             self._angularVelocity = Variable(
                 self._model,
@@ -230,7 +230,7 @@ class Boom(object):
                 on_step=self.angular_velocity_step,
                 rng=(),
             )
-            self._angularVelocity.setter = self._angular_velocity_setter
+            self._angularVelocity.setter = self._angular_velocity_setter  # type: ignore[method-assign, assignment]
         elif name == "lengthVelocity":
             self._lengthVelocity = Variable(
                 self._model,
@@ -418,14 +418,16 @@ class Boom(object):
         if self.damping > 0:  # flexible joint (rope)
             com_len = self.length * self.massCenter[0]  # length between anchor and c.o.m (unchanged!)
             com0 = self.origin + com_len * self.direction  # the previous absolute c.o.m. point
+            assert self.anchor0 is not None, "Boom.anchor0 is None"
             anchor_to_com = com0 - self.anchor0.end
             anchor_to_com_len = np.linalg.norm(anchor_to_com)
-            if anchor_to_com_len >= com_len:  # rope is dragged (or unchanged). Normalize anchor_to_com
+            if anchor_to_com_len >= com_len:
+                # rope is dragged (or unchanged). Normalize anchor_to_com
                 return anchor_to_com / anchor_to_com_len
-            else:  # rope falls, keeping length constant
-                anchor_to_com[2] = -sqrt(com_len**2 - anchor_to_com[0] ** 2 - anchor_to_com[1] ** 2)
-                # we choose only the negative z-komponent, excluding loads in upper half
-                return anchor_to_com / com_len
+            # rope falls, keeping length constant
+            anchor_to_com[2] = -sqrt(com_len**2 - anchor_to_com[0] ** 2 - anchor_to_com[1] ** 2)
+            # we choose only the negative z-komponent, excluding loads in upper half
+            return anchor_to_com / com_len
         else:
             _angle = self.base_angles + self.boom[1:]
             return normalized(spherical_to_cartesian((self.length, *_angle)))
