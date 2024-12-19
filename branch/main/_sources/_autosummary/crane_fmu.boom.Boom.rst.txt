@@ -1,0 +1,43 @@
+Boom
+====
+
+.. currentmodule:: crane_fmu.boom
+
+.. autoclass:: Boom
+   :members:
+   :show-inheritance:
+
+
+   
+   .. automethod:: __init__
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~Boom.__init__
+      ~Boom.angular_velocity_step
+      ~Boom.boom_setter
+      ~Boom.calc_statics_dynamics
+      ~Boom.change_length
+      ~Boom.change_mass
+      ~Boom.get_base_angles
+      ~Boom.get_direction
+      ~Boom.translate
+      ~Boom.update_child
+   
+   
+
+
+   
+   
+   .. rubric:: Attributes
+   .. autosummary::
+   
+      ~Boom.c_m
+      ~Boom.c_m_sub
+      ~Boom.end
+      ~Boom.length
+      ~Boom.model
+      ~Boom.name
+   
+   

@@ -1,0 +1,26 @@
+Animation
+=========
+
+.. currentmodule:: crane_fmu.crane
+
+.. autoclass:: Animation
+   :members:
+   :show-inheritance:
+
+
+   
+   .. automethod:: __init__
+   
+   .. rubric:: Methods
+   .. autosummary::
+   
+      ~Animation.__init__
+      ~Animation.interactive_off
+      ~Animation.update
+   
+   
+
+
+   
+   
+   
