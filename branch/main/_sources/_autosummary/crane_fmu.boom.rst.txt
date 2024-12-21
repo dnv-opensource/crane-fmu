@@ -1,0 +1,28 @@
+﻿crane\_fmu.boom
+===============
+
+.. automodule:: crane_fmu.boom
+   :members:
+   :exclude-members: Boom,
+   
+
+
+   
+   .. rubric:: Functions
+   .. autosummary::
+   
+      normalized
+   
+   .. rubric:: Classes
+   .. autosummary::
+      :toctree:
+      :template: custom-class.rst
+   
+      Boom
+   
+   .. rubric:: Exceptions
+   .. autosummary::
+   
+      BoomInitError
+      BoomOperationError
+   

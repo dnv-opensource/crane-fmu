@@ -1,0 +1,18 @@
+﻿crane\_fmu.crane
+================
+
+.. automodule:: crane_fmu.crane
+   :members:
+   :exclude-members: Animation,Crane,
+   
+
+
+   
+   .. rubric:: Classes
+   .. autosummary::
+      :toctree:
+      :template: custom-class.rst
+   
+      Animation
+      Crane
+   

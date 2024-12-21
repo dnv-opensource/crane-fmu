@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="./">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Introduction &#8212; Crane FMU 0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="_static/classic.css?v=843f8ea2" />
+    <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=fd3f3429" />
+    
+    <script src="_static/documentation_options.js?v=2709fde1"></script>
+    <script src="_static/doctools.js?v=9a2dae69"></script>
+    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Modules documentation" href="modules.html" />
+    <link rel="prev" title="crane_fmu package: Python-scripted generic crane and translation to FMU" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="modules.html" title="Modules documentation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="crane_fmu package: Python-scripted generic crane and translation to FMU"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Crane FMU 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Introduction</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <section id="introduction">
+<h1>Introduction<a class="headerlink" href="#introduction" title="Link to this heading">¶</a></h1>
+<p>The package extends the <cite>component_model</cite> package to provide the means to construct cranes.
+The package can be used to define concrete cranes and simulate their usage, see <cite>tests/resources/mobile-crane.py</cite> as example.</p>
+<section id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading">¶</a></h2>
+<p>A concrete crane model should consist of an extension of the Crane object,</p>
+<ul class="simple">
+<li><p>defining general model variables like <cite>name</cite>, <cite>author</cite>, <cite>version</cite>, etc.</p></li>
+<li><p>defining the anticipated set of booms</p></li>
+<li><p>if there is a wish to keep parameters configurable, these can be kept as parameters of the extended model.</p></li>
+<li><p>In a separate script, instantiate the concrete crane, test it and run <cite>Model.build(…)</cite> to make the FMU.</p></li>
+</ul>
+<p>See the file <cite>tests/resources/mobile_crane.py</cite> and related test files
+as an example on how a concrete crane can be defined and used.</p>
+<ol class="arabic simple">
+<li><p>Install the <cite>crane_fmu</cite> package: <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">crane_fmu</span></code></p></li>
+<li><p>Software dependencies: <cite>PythonFMU</cite>, <cite>component_model</cite>, <cite>numpy</cite>, <cite>pint</cite>, <cite>uuid</cite>, <cite>ElementTree</cite></p></li>
+<li><p>Latest releases: Version 0.1, based on component_model version 0.1</p></li>
+</ol>
+</section>
+<section id="usage-example">
+<h2>Usage example<a class="headerlink" href="#usage-example" title="Link to this heading">¶</a></h2>
+<p>This is a simple mobile crane, like they are used on e.g. building sites with</p>
+<ul class="simple">
+<li><p>a short pedestal, which can be turn around,</p></li>
+<li><p>one boom with variable length and which can be lifted</p></li>
+<li><p>one rope, where loads can be attached.</p></li>
+</ul>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">crane_fmu.crane</span> <span class="kn">import</span> <span class="n">Crane</span>
+
+<span class="k">class</span> <span class="nc">MobileCrane</span><span class="p">(</span><span class="n">Crane</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Simple mobile crane for FMU testing purposes.</span>
+<span class="sd">    The crane has a short pedestal, one variable-length stiff boom and a rope.</span>
+<span class="sd">    The size and weight of the various parts can be configured.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name (str) : name of the crane type</span>
+<span class="sd">        description (str) : short description</span>
+<span class="sd">        author (str)</span>
+<span class="sd">        version (str)</span>
+<span class="sd">        pedestalMass (str) : mass of the pedestal - quantity and unit as string</span>
+<span class="sd">        pedestalHeight (str) : height (fixed) of the pedestal, with units</span>
+<span class="sd">        boomMass (str) : mass of the single boom, with units</span>
+<span class="sd">        boomLength0 (str) : minimum length of the boom, with units</span>
+<span class="sd">        boomLength1 (str) : maximum length of the boom, with units</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;mobile_crane&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Simple mobile crane (for FMU testing) with short pedestal, one variable-length elevation boom and a rope&quot;</span><span class="p">,</span>
+        <span class="n">author</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;DNV, SEACo project&quot;</span><span class="p">,</span>
+        <span class="n">version</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;0.2&quot;</span><span class="p">,</span>
+        <span class="n">pedestalMass</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;10000.0 kg&quot;</span><span class="p">,</span>
+        <span class="n">pedestalHeight</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;3.0 m&quot;</span><span class="p">,</span>
+        <span class="n">boomMass</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;1000.0 kg&quot;</span><span class="p">,</span>
+        <span class="n">boomLength0</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;8 m&quot;</span><span class="p">,</span>
+        <span class="n">boomLength1</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;50 m&quot;</span><span class="p">,</span>
+        <span class="n">rope_mass_range</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;50kg&quot;</span><span class="p">,</span> <span class="s2">&quot;2000 kg&quot;</span><span class="p">),</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="n">description</span><span class="p">,</span> <span class="n">author</span><span class="o">=</span><span class="n">author</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="n">version</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_boom</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;pedestal&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;The crane base, on one side fixed to the vessel and on the other side the first crane boom is fixed to it. The mass should include all additional items fixed to it, like the operator&#39;s cab&quot;</span><span class="p">,</span>
+            <span class="n">mass</span><span class="o">=</span><span class="n">pedestalMass</span><span class="p">,</span>
+            <span class="n">massCenter</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">),</span>
+            <span class="n">boom</span><span class="o">=</span><span class="p">(</span><span class="n">pedestalHeight</span><span class="p">,</span> <span class="s2">&quot;0deg&quot;</span><span class="p">,</span> <span class="s2">&quot;0deg&quot;</span><span class="p">),</span>
+            <span class="n">boom_rng</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;0deg&quot;</span><span class="p">,</span> <span class="s2">&quot;360deg&quot;</span><span class="p">)),</span>
+        <span class="p">)</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_boom</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;boom&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;The boom. Can be lifted and length can change within the given range&quot;</span><span class="p">,</span>
+            <span class="n">mass</span><span class="o">=</span><span class="n">boomMass</span><span class="p">,</span>
+            <span class="n">massCenter</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+            <span class="n">boom</span><span class="o">=</span><span class="p">(</span><span class="n">boomLength0</span><span class="p">,</span> <span class="s2">&quot;90deg&quot;</span><span class="p">,</span> <span class="s2">&quot;0deg&quot;</span><span class="p">),</span>
+            <span class="n">boom_rng</span><span class="o">=</span><span class="p">((</span><span class="n">boomLength0</span><span class="p">,</span> <span class="n">boomLength1</span><span class="p">),</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;90deg&quot;</span><span class="p">),</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_boom</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;rope&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;The rope fixed to the last boom. Flexible connection&quot;</span><span class="p">,</span>
+            <span class="n">mass</span><span class="o">=</span><span class="s2">&quot;50.0 kg&quot;</span><span class="p">,</span>  <span class="c1"># so far basically the hook</span>
+            <span class="n">massCenter</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span>
+            <span class="n">mass_rng</span><span class="o">=</span><span class="n">rope_mass_range</span><span class="p">,</span>
+            <span class="n">boom</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;1e-6 m&quot;</span><span class="p">,</span> <span class="s2">&quot;180deg&quot;</span><span class="p">,</span> <span class="s2">&quot;0 deg&quot;</span><span class="p">),</span>
+            <span class="n">boom_rng</span><span class="o">=</span><span class="p">(</span>
+                <span class="p">(</span><span class="s2">&quot;1e-6 m&quot;</span><span class="p">,</span> <span class="n">boomLength1</span><span class="p">),</span>
+                <span class="p">(</span><span class="s2">&quot;90deg&quot;</span><span class="p">,</span> <span class="s2">&quot;270deg&quot;</span><span class="p">),</span>
+                <span class="p">(</span><span class="s2">&quot;-180deg&quot;</span><span class="p">,</span> <span class="s2">&quot;180deg&quot;</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">damping</span><span class="o">=</span><span class="mf">50.0</span><span class="p">,</span>
+            <span class="n">animationLW</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># make sure that _comSub is calculated for all booms:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">calc_statics_dynamics</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">do_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">currentTime</span><span class="p">,</span> <span class="n">stepSize</span><span class="p">):</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">do_step</span><span class="p">(</span><span class="n">currentTime</span><span class="p">,</span> <span class="n">stepSize</span><span class="p">)</span>
+        <span class="c1"># print(f&quot;Time {currentTime}, {self.rope_tip}&quot;)</span>
+        <span class="c1"># print(f&quot;MobileCrane.do_step. Status {status}&quot;)</span>
+        <span class="k">return</span> <span class="n">status</span>
+</pre></div>
+</div>
+<p>Testing and usage of the <cite>MobileCrane.fmu</cite> is demonstrated as part of related <cite>test_***</cite> files.</p>
+</section>
+<section id="contribute">
+<h2>Contribute<a class="headerlink" href="#contribute" title="Link to this heading">¶</a></h2>
+<p>Anybody in the FMU, OSPand SEACo community is especially welcome to contribute to this code, to make it better,
+and especially including other features from model assurance and from SEACo issues.</p>
+</section>
+</section>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="Main">
+        <div class="sphinxsidebarwrapper">
+  <div>
+    <h3><a href="index.html">Table of Contents</a></h3>
+    <ul>
+<li><a class="reference internal" href="#">Introduction</a><ul>
+<li><a class="reference internal" href="#getting-started">Getting Started</a></li>
+<li><a class="reference internal" href="#usage-example">Usage example</a></li>
+<li><a class="reference internal" href="#contribute">Contribute</a></li>
+</ul>
+</li>
+</ul>
+
+  </div>
+  <div>
+    <h4>Previous topic</h4>
+    <p class="topless"><a href="index.html"
+                          title="previous chapter">crane_fmu package: Python-scripted generic crane and translation to FMU</a></p>
+  </div>
+  <div>
+    <h4>Next topic</h4>
+    <p class="topless"><a href="modules.html"
+                          title="next chapter">Modules documentation</a></p>
+  </div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/readme.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="Related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="modules.html" title="Modules documentation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="crane_fmu package: Python-scripted generic crane and translation to FMU"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">Crane FMU 0.1 documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Introduction</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+    &#169; Copyright 2024, DNV.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 8.0.2.
+    </div>
+  </body>
+</html>
